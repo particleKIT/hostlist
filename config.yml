@@ -1,0 +1,40 @@
+groups:
+  - abc
+  - def
+sources:
+  - desktops
+  - notebooks
+  - servers
+
+domain: kit.edu
+
+no_ansible_hosts: 
+  - notebooks
+
+groups_without_ip: []
+
+groups_without_mac: []
+
+dnsvs:
+  namespaces:
+    - group1/1
+    - group2/3
+
+hostlistdir: hostlists/
+builddir: build/
+
+dhcp:
+  header: templates/dhcpd.conf.header
+  build: dhcpd.conf
+
+munin:
+  inventory: munin/hosts
+  build: muninhosts
+
+hosts: 
+  build: hosts
+
+ssh:
+  build: ssh_known_hosts
+  import: /etc/ssh/ssh_known_hosts
+

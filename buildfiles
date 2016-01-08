@@ -1,0 +1,114 @@
+#!/usr/bin/env python3
+
+import argparse
+import logging
+import subprocess
+import inventory_lib
+from distutils.util import strtobool
+
+
+def parse_args(services):
+    parser = argparse.ArgumentParser(description='create all configuration files based on host input')
+
+    parser.add_argument('--verbose',
+                        '-v',
+                        action='count',
+                        help='more output',
+                        default=0)
+    parser.add_argument('--quiet',
+                        '-q',
+                        action='store_true',
+                        help='quiet run, only output errors')
+    parser.add_argument('--dryrun',
+                        '-d',
+                        action='store_true',
+                        help='only create build files, but don\'t deploy')
+    parser.add_argument('--dnsvs',
+                        action='store_true',
+                        help='sync with dnsvs')
+
+    for s in services:
+        parser.add_argument('--'+s,
+                            action='store_true',
+                            help='run '+s)
+
+    args = parser.parse_args()
+    return args
+
+
+def run():
+    logging.basicConfig(format='%(levelname)s:%(message)s')
+
+    services = ['dhcp', 'hosts', 'munin', 'ssh_known_hosts']
+    args = parse_args(services)
+
+    logging.getLogger().setLevel(logging.INFO)
+    if args.verbose == 1:
+        logging.getLogger().setLevel(logging.DEBUG)
+    if args.quiet:
+        logging.getLogger().setLevel(logging.ERROR)
+
+    # get a dict of the arguments
+    argdict = vars(args)
+    d = {s: argdict[s] for s in services}
+
+    logging.info("loading hostlist from file")
+    hostlist = inventory_lib.Hostlist(source='file')
+    hostlist.check_consistency()
+
+    rundeploy = False
+    rundnsvs = False
+    # run set of default operations when none specified
+    if not any(d.values()):
+        d['dhcp'] = True
+        d['hosts'] = True
+        rundeploy = True
+
+        # don't sync with dnsvs on dryrun
+        rundnsvs = not args.dryrun
+
+    if args.dnsvs or rundnsvs:
+        logging.info("loading hostlist from dnsvs")
+        try:
+            dnsvs_hostlist = inventory_lib.Hostlist(source='dnsvs')
+        except:
+            logging.error("Failed to connect to DNSVS. Please make sure ssh dns-robot@dnsvs.scc.kit.edu works for you.")
+            logging.error("Not syncing with DNSVS.")
+        else:
+            dnsvs_hostlist.check_consistency()
+
+            dnsvs_diff = hostlist.diff(dnsvs_hostlist)
+            if dnsvs_diff.empty:
+                logging.info("DNSVS and local files agree, nothing to do")
+            else:
+                hostlist.print_diff(dnsvs_diff)
+
+            if not args.dryrun and not dnsvs_diff.empty:
+                print("Do you want to apply this patch to dnsvs? (y/n)")
+                choice = input().lower()
+                if choice != '' and strtobool(choice):
+                    dnsvs_hostlist.apply_diff(dnsvs_diff)
+
+    for service, start in d.items():
+        if start:
+            func = getattr(hostlist, "make_"+service, None)
+            if func:
+                logging.info("running make on "+service)
+                func()
+            else:
+                logging.error("missing make function for "+service)
+
+    subprocess.call(["git", "--no-pager", "diff", "-U0", "build"])
+    if rundeploy and not args.dryrun:
+        print("Do you want to deploy? (y/n)")
+        choice = input().lower()
+        if choice != '' and strtobool(choice):
+            print("Please enter deploy password.")
+            subprocess.call(["ansible-playbook", "copy_dns_dhcp_to_server.yml"])
+
+    print('-'*40)
+    print("please remember to commit and push when you are done")
+    print("git commit -av && git push")
+
+if __name__ == "__main__":
+    run()

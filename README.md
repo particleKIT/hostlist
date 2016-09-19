@@ -15,7 +15,7 @@ At the moment the supported services are:
 ## DNSVS Synchronization
 
 Besides generating config files, the hostlist can also be synchronized against
-DNSVS, which is the dns management system used by [kit.edu].
+DNSVS, which is the dns management system used by https://www.scc.kit.edu.
 
 ## Tests
 To run the unit tests:

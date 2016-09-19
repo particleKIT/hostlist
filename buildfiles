@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 
+# pylint: disable=broad-except
+
+"Sync hostlist and builds config files for services."
+
 import argparse
 import logging
 import subprocess
-import inventory_lib
+import types
 from distutils.util import strtobool
+
+import hostlist
+import cnamelist
+import output_services
+from dnsvs import sync
+from dnsvs import dnsvs_webapi as dnsvs
+
+from config import CONFIGINSTANCE as Config
 
 
 def parse_args(services):
-    parser = argparse.ArgumentParser(description='create all configuration files based on host input')
+    "setup parser for script arguments"
+    parser = argparse.ArgumentParser(
+        description='create all configuration files based on host input',
+    )
 
     parser.add_argument('--verbose',
                         '-v',
@@ -27,88 +42,146 @@ def parse_args(services):
                         action='store_true',
                         help='sync with dnsvs')
 
-    for s in services:
-        parser.add_argument('--'+s,
+    for service in services:
+        parser.add_argument('--'+service,
                             action='store_true',
-                            help='run '+s)
+                            help='run '+service)
 
     args = parser.parse_args()
     return args
 
 
-def run():
+def combine_diffs(*diffs):
+    """combines several diffs into one"""
+    total = types.SimpleNamespace()
+    total.add, total.remove = [], []
+    for diff in diffs:
+        total.add.extend(diff.add)
+        total.remove.extend(diff.remove)
+    total.empty = (not total.add) and (not total.remove)
+    return total
+
+
+def sync_dnsvs(file_hostlist, file_cnames, dryrun):
+    "sync hostlist with dnsvs"
+    try:
+        con = dnsvs.dnsvs_interface()
+        logging.info("loading hostlist from dnsvs")
+        dnsvs_hostlist = hostlist.DNSVSHostlist(con)
+        logging.info("loading cnames from dnsvs")
+        dnsvs_cnames = cnamelist.DNSVSCNamelist(con)
+    except Exception as exc:
+        logging.error(exc)
+        logging.error("Failed to connect to DNSVS."
+                      " Please make sure you have a valid ssl key,"
+                      " cf. Readme.md.")
+        logging.error("Not syncing with DNSVS.")
+    else:
+        dnsvs_hostlist.check_consistency(dnsvs_cnames)
+
+        dnsvs_diff = file_hostlist.diff(dnsvs_hostlist)
+        dnsvs_cnames_diff = file_cnames.diff(dnsvs_cnames)
+        total_diff = combine_diffs(dnsvs_diff, dnsvs_cnames_diff)
+        if total_diff.empty:
+            logging.info("DNSVS and local files agree, nothing to do")
+        else:
+            sync.print_diff(total_diff)
+
+        if not dryrun and not total_diff.empty:
+            print("Do you want to apply this patch to dnsvs? (y/n)")
+            choice = input().lower()
+            if choice != '' and strtobool(choice):
+                sync.apply_diff(total_diff)
+
+
+def run_deploy():
+    "Deploy DNS/DHCP settings to servers"
+
+    deployhosts = Config['deployhosts']
+    for host in deployhosts:
+        print("Do you want to deploy to %s? (y/n)" % host)
+        choice = input().lower()
+        if choice != '' and strtobool(choice):
+            print("Running in checkmode with diff first.")
+            print("Please enter deploy password.")
+            try:
+                stdout = subprocess.check_output([
+                    "ansible-playbook",
+                    '--check',
+                    '--diff',
+                    "copy_dns_dhcp_to_server.yml",
+                    "-l",
+                    host])
+            except subprocess.CalledProcessError:
+                logging.error("Ansible check failed, skipping deploy.")
+                continue
+            print(stdout.decode())
+            print("Do you really want to deploy to %s? (y/n)" % host)
+            choice = input().lower()
+            if choice != '' and strtobool(choice):
+                print("Please enter deploy password.")
+                subprocess.call(["ansible-playbook",
+                                 "copy_dns_dhcp_to_server.yml",
+                                 "-l",
+                                 host])
+
+
+def main():
+    "main routine"
+
     logging.basicConfig(format='%(levelname)s:%(message)s')
 
     services = ['dhcp', 'hosts', 'munin', 'ssh_known_hosts']
     args = parse_args(services)
 
     logging.getLogger().setLevel(logging.INFO)
-    if args.verbose == 1:
+    if args.verbose >= 1:
         logging.getLogger().setLevel(logging.DEBUG)
     if args.quiet:
         logging.getLogger().setLevel(logging.ERROR)
 
     # get a dict of the arguments
     argdict = vars(args)
-    d = {s: argdict[s] for s in services}
+    servicedict = {s: argdict[s] for s in services}
 
-    logging.info("loading hostlist from file")
-    hostlist = inventory_lib.Hostlist(source='file')
-    hostlist.check_consistency()
+    logging.info("loading hostlist from yml files")
+    file_hostlist = hostlist.YMLHostlist()
+    logging.info("loading cnames from file")
+    file_cnames = cnamelist.FileCNamelist()
+
+    file_hostlist.check_consistency(file_cnames)
 
     rundeploy = False
     rundnsvs = False
     # run set of default operations when none specified
-    if not any(d.values()):
-        d['dhcp'] = True
-        d['hosts'] = True
+    if not any(servicedict.values()):
+        servicedict['dhcp'] = True
+        servicedict['hosts'] = True
         rundeploy = True
 
         # don't sync with dnsvs on dryrun
         rundnsvs = not args.dryrun
 
     if args.dnsvs or rundnsvs:
-        logging.info("loading hostlist from dnsvs")
-        try:
-            dnsvs_hostlist = inventory_lib.Hostlist(source='dnsvs')
-        except:
-            logging.error("Failed to connect to DNSVS. Please make sure ssh dns-robot@dnsvs.scc.kit.edu works for you.")
-            logging.error("Not syncing with DNSVS.")
-        else:
-            dnsvs_hostlist.check_consistency()
+        sync_dnsvs(file_hostlist, file_cnames, args.dryrun)
 
-            dnsvs_diff = hostlist.diff(dnsvs_hostlist)
-            if dnsvs_diff.empty:
-                logging.info("DNSVS and local files agree, nothing to do")
-            else:
-                hostlist.print_diff(dnsvs_diff)
-
-            if not args.dryrun and not dnsvs_diff.empty:
-                print("Do you want to apply this patch to dnsvs? (y/n)")
-                choice = input().lower()
-                if choice != '' and strtobool(choice):
-                    dnsvs_hostlist.apply_diff(dnsvs_diff)
-
-    for service, start in d.items():
+    for service, start in servicedict.items():
         if start:
-            func = getattr(hostlist, "make_"+service, None)
-            if func:
-                logging.info("running make on "+service)
-                func()
+            outputcls = getattr(output_services, service.title() + "Output", None)
+            if outputcls:
+                logging.info("generating output for " + service)
+                outputcls.gen_content(file_hostlist)
             else:
-                logging.error("missing make function for "+service)
+                logging.error("missing make function for " + service)
 
     subprocess.call(["git", "--no-pager", "diff", "-U0", "build"])
-    if rundeploy and not args.dryrun:
-        print("Do you want to deploy? (y/n)")
-        choice = input().lower()
-        if choice != '' and strtobool(choice):
-            print("Please enter deploy password.")
-            subprocess.call(["ansible-playbook", "copy_dns_dhcp_to_server.yml"])
 
-    print('-'*40)
+    if rundeploy and not args.dryrun:
+        run_deploy()
+
+    print('-' * 40)
     print("please remember to commit and push when you are done")
     print("git commit -av && git push")
 
 if __name__ == "__main__":
-    run()
+    main()

@@ -2,7 +2,8 @@
 
 import argparse
 import logging
-import inventory_lib
+import hostlist
+from output_services import AnsibleOutput
 
 
 def parse_args():
@@ -27,10 +28,10 @@ def run():
     if args.verbose >= 1:
         logging.getLogger().setLevel(logging.DEBUG)
 
-    hostlist = inventory_lib.Hostlist()
+    myhostlist = hostlist.YMLHostlist()
 
     logging.info("running make_ansible")
-    ansible_inventory = hostlist.make_ansible()
+    ansible_inventory = AnsibleOutput.gen_content(myhostlist)
 
     print(ansible_inventory)
 

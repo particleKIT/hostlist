@@ -1,40 +1,32 @@
-groups:
-  - abc
-  - def
-sources:
-  - desktops
-  - notebooks
-  - servers
+---
 
 domain: kit.edu
 
-no_ansible_hosts: 
-  - notebooks
+iprange:
+  internal: "192.168.0.0/24"
+  external: "192.168.1.0/24"
 
-groups_without_ip: []
-
-groups_without_mac: []
-
-dnsvs:
-  namespaces:
-    - group1/1
-    - group2/3
+nonunique_ips:
+  - 192.168.1.5
 
 hostlistdir: hostlists/
 builddir: build/
 
 dhcp:
-  header: templates/dhcpd.conf.header
-  build: dhcpd.conf
+  build: dhcpd-hosts.conf.myserver.abc.kit.edu
+  build_internal: dhcpd-hosts.conf.myserver2.abc.kit.edu
+
+deployhosts:
+  - 'myserver.abc.kit.edu'
+  - 'myserver2.abc.kit.edu'
 
 munin:
   inventory: munin/hosts
   build: muninhosts
 
-hosts: 
+hosts:
   build: hosts
 
 ssh:
   build: ssh_known_hosts
   import: /etc/ssh/ssh_known_hosts
-

@@ -1,0 +1,35 @@
+---
+
+- name: copy dns config
+  hosts: dnsserver
+  tasks:
+      - name: copy hostlist
+        copy:
+            src: build/hosts
+            dest: /etc/dnsmasq-hosts.conf
+            backup: yes
+            # validate: dnsmasq --test -C %s
+        notify: restart dnsmasq
+      - name: copy cnames
+        copy:
+            src: hostlists/cnames
+            dest: /etc/dnsmasq-cnames.conf
+            backup: yes
+        notify: restart dnsmasq
+  handlers:
+      - name: restart dnsmasq
+        service: name=dnsmasq state=restarted
+
+- name: copy dhcp config
+  hosts: dhcpserver
+  tasks:
+      - name: copy dhcp hosts
+        copy:
+            src: build/dhcpd-hosts.conf.{{ansible_fqdn}}
+            dest: /etc/dhcpd.d/hosts.conf
+            backup: yes
+            # validate: dhcpd -t -cf %s
+        notify: restart dhcpd
+  handlers:
+      - name: restart dhcpd
+        service: name=dhcpd state=restarted

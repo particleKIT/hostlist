@@ -2,21 +2,17 @@
 
 from collections import defaultdict
 import json
-from abc import ABCMeta, abstractmethod
 import ipaddress
 import os
 import logging
-import tempfile
-import subprocess
 
 from .config import CONFIGINSTANCE as Config
 
 
-class OutputBase(metaclass=ABCMeta):
+class OutputBase:
     "Baseclass for output services"
 
     @classmethod
-    @abstractmethod
     def gen_content(cls, hostlist, cnames, stdout):
         "Return output for requested service"
         pass
@@ -81,7 +77,7 @@ class MuninOutput(OutputBase):
     @staticmethod
     def _get_hostblock(host):
         cont = '[{institute}{hosttype};{h}]\naddress {h}\n'.format(
-            h=host.fqdn, 
+            h=host.fqdn,
             institute=host.vars['institute'],
             hosttype=host.vars['hosttype'],
         )
@@ -89,7 +85,6 @@ class MuninOutput(OutputBase):
             for line in host.vars['munin']:
                 cont += line + '\n'
         return cont
-
 
 
 class DhcpOutput(OutputBase):

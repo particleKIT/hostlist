@@ -1,24 +1,26 @@
 ---
 
-domain: kit.edu
+domain: example.com
 
 iprange:
-  internal: "192.168.0.0/24"
-  external: "192.168.1.0/24"
+  external: '198.51.100.0/24'
+  internal: '203.0.113.0/24'
 
 nonunique_ips:
-  - 192.168.1.5
+  - 198.51.100.10
 
 hostlistdir: hostlists/
 builddir: build/
 
 dhcp:
-  build: dhcpd-hosts.conf.myserver.abc.kit.edu
-  build_internal: dhcpd-hosts.conf.myserver2.abc.kit.edu
+  build: dhcpd-hosts.conf.external
+  build_internal: dhcpd-hosts.conf.internal
+
+ethers: ethers
 
 deployhosts:
-  - 'myserver.abc.kit.edu'
-  - 'myserver2.abc.kit.edu'
+  - 'dhcp1.example.com'
+  - 'dhcp2.example.com'
 
 munin:
   inventory: munin/hosts
@@ -28,5 +30,4 @@ hosts:
   build: hosts
 
 ssh:
-  build: ssh_known_hosts
-  import: /etc/ssh/ssh_known_hosts
+  hostlist: ssh-keyscan_hosts

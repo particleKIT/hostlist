@@ -2,7 +2,7 @@
 
 import logging
 import types
-from config import CONFIGINSTANCE as Config
+from .config import CONFIGINSTANCE as Config
 
 
 class CNamelist(list):

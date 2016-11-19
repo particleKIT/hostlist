@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-import dnsvs.dnsvs_webapi as dnsvs
 import logging
+
+from hostlist.dnsvs import dnsvs_webapi as dnsvs
 
 # use termcolor when available, otherwise ignore
 try:

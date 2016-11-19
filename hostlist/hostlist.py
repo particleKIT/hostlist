@@ -2,7 +2,6 @@
 
 import logging
 import types
-import re
 from collections import defaultdict
 import os
 import sys
@@ -10,8 +9,12 @@ import ipaddress
 import itertools
 import glob
 import yaml
+try:
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:
+    from yaml import SafeLoader
 
-import host
+from . import host
 
 # use termcolor when available, otherwise ignore
 try:
@@ -20,7 +23,7 @@ except ImportError:
     def colored(text, col):
         return text
 
-from config import CONFIGINSTANCE as Config
+from .config import CONFIGINSTANCE as Config
 
 
 class Hostlist(list):
@@ -182,13 +185,8 @@ class DNSVSHostlist(Hostlist):
             ip, is_nonunique = data
             self.append(host.Host(hostname, ip, is_nonunique))
 
-
 class YMLHostlist(Hostlist):
     "Hostlist filed from yml file"
-
-    _num = '(2[0-5]|1[0-9]|[0-9])?[0-9]'
-    IPREGEXP = re.compile(r'^(' + _num + '\.){3}(' + _num + ')$')
-    MACREGEXP = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
 
     def __init__(self):
         super().__init__()
@@ -216,13 +214,8 @@ class YMLHostlist(Hostlist):
             logging.error('file %s not readable' % fname)
             return
 
-        yaml.add_constructor('!ip', lambda l, val: ipaddress.ip_address(l.construct_scalar(val)))
-        yaml.add_implicit_resolver(u'!ip', self.IPREGEXP)
-        yaml.add_constructor('!mac', lambda l, val: host.MAC(l.construct_scalar(val)))
-        yaml.add_implicit_resolver(u'!mac', self.MACREGEXP)
-        # TODO: same for mac
         try:
-            yamlsections = yaml.load_all(infile)
+            yamlsections = yaml.load_all(infile, Loader=SafeLoader)
         except yaml.YAMLError as e:
             logging.error('file %s not correct yml' % fname)
             logging.error(str(e))
@@ -243,3 +236,10 @@ class YMLHostlist(Hostlist):
             for hostdata in yamlout["hosts"]:
                 self.append(host.YMLHost(hostdata, hosttype, institute, header))
 
+        # do replacements for docker
+        for ahost in self:
+            if 'docker' in ahost.vars and 'ports' in ahost.vars['docker']:
+                # prefix docker ports with container IP
+                ahost.vars['docker']['ports'] = [
+                    str(ahost.ip) + ':' + port for port in ahost.vars['docker']['ports']
+                ]

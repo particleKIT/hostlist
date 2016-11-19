@@ -3,6 +3,10 @@
 Hostlist reads yaml lists with information about hosts and from that generates
 config files and inventory for several services.
 
+## Configuration
+
+The main configuration is based on a config.yml file in the current directory. See the package for an example file.
+
 ## Services
 
 At the moment the supported services are:

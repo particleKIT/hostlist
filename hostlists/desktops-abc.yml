@@ -2,9 +2,9 @@
 header:
   some_var: default value
 hosts:
-  - hostname: host1.abc.kit.edu
+  - hostname: host1.abc.example.com
     mac: 00:12:34:ab:CD:EF
-    ip: 192.168.1.2
-  - hostname: host2.abc.kit.edu
+    ip: 198.51.100.3
+  - hostname: host2.abc.example.com
     mac: 00:12:34:ab:CD:FF
-    ip: 192.168.1.3
+    ip: 198.51.100.4

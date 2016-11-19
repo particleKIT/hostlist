@@ -2,8 +2,11 @@
 
 import ipaddress
 import logging
+import subprocess
+import datetime
+import re
 
-from config import CONFIGINSTANCE as Config
+from .config import CONFIGINSTANCE as Config
 
 
 class Host:
@@ -88,6 +91,11 @@ class Host:
 class YMLHost(Host):
     "Host generated from yml file entry"
 
+    _num = '(2[0-5]|1[0-9]|[0-9])?[0-9]'
+    IPREGEXP = re.compile(r'^(' + _num + '\.){3}(' + _num + ')$')
+    MACREGEXP = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
+
+
     def __init__(self, inputdata, hosttype, institute, header=None):
         """
         parses a config file line of the form
@@ -102,8 +110,10 @@ class YMLHost(Host):
         for var, value in inputdata.items():
             self.vars[var] = value
         self.hostname = self.vars['hostname']
-        self.ip = self.vars['ip']  # this gets overwritten by ansible
+
         self._check_vars()
+        self._check_user()
+        self._check_end_date()
 
         self._set_fqdn()
         self._set_publicip()
@@ -113,14 +123,39 @@ class YMLHost(Host):
         self.header = header
         logging.debug("Added " + str(self))
 
+    def _check_end_date(self):
+        "Check that end_date is not over yet"
+        if 'end_date' in self.vars:
+            end_date = self.vars['end_date']
+            if not isinstance(end_date, datetime.date):
+                logging.error("Parsing of end_date %s led to non-date datatype %s for host %s." % (end_date, end_date.__class__, self.hostname))
+                return
+            if end_date < datetime.date.today():
+                logging.error("Host end_date in the past for host %s." % self.hostname)
+
+    def _check_user(self):
+        "Check that user (still) exists if set"
+        if 'user' in self.vars:
+            try:
+                subprocess.check_output(['id', self.vars['user']])
+            except subprocess.CalledProcessError:
+                logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.hostname))
+
     def _check_vars(self):
         "Check validity of vars set for host."
-        if not isinstance(self.ip, ipaddress.IPv4Address):
-            raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.ip))
+        try:
+            assert self.IPREGEXP.match(self.vars['ip'])
+            self.ip = ipaddress.ip_address(self.vars['ip'])
+            assert isinstance(self.ip, ipaddress.IPv4Address)
+        except:
+            raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.vars['ip'])) 
         if 'mac' in self.vars:
-            self.mac = self.vars['mac']
-            if not isinstance(self.mac, MAC):
+            try:
+                assert self.MACREGEXP.match(self.vars['mac'])
+                self.mac = MAC(self.vars['mac'])
+            except:
                 raise Exception("Host %s does not have a valid MAC address (%s)." % (self.hostname, self.mac))
+
         if not self.hostname:
             raise Exception("No valid hostname given for %s." % str(self))
 

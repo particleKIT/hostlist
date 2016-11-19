@@ -127,7 +127,6 @@ class Hostlist(list):
                     success = False
         return success
 
-
     def diff(self, otherhostlist):
         diff = types.SimpleNamespace()
         diff.add, diff.remove = [], []

@@ -1,3 +1,6 @@
 __pycache__
 *.pyc
 tags
+dist
+.env
+.virtualenv

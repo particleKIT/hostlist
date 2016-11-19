@@ -17,4 +17,5 @@ class Config(dict):
         except:
             logging.error("failed to load " + self.CONFIGNAME)
 
+
 CONFIGINSTANCE = Config()

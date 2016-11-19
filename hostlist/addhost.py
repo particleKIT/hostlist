@@ -202,6 +202,7 @@ def main():
     with open(args.hostlist, 'a') as f:
         f.write(hostline + '\n')
 
+
 if __name__ == '__main__':
     main()
 

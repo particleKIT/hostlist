@@ -1,0 +1,13 @@
+---
+
+language: python
+python:
+  - 3.3
+  - 3.4
+  - 3.5
+install:
+  - pip install -r requirements.txt
+  - pip install flake8 flit
+script:
+  - flake8 hostlist
+  - flit wheel

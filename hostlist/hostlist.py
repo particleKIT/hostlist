@@ -127,33 +127,6 @@ class Hostlist(list):
                     success = False
         return success
 
-    def check_iprange_overlap(self):
-        "check whether any of the ipranges given in headers overlap"
-
-        overlaps = []
-        for ita, itb in itertools.combinations(self.fileheaders.items(), 2):
-            filea, headera = ita
-            fileb, headerb = itb
-            try:
-                a = headera['iprange']
-                b = headerb['iprange']
-            except KeyError:
-                # one of the files does not have iprange defined, ignore it
-                continue
-            if ('iprange_allow_overlap' in headera and headera['iprange_allow_overlap']) or \
-               ('iprange_allow_overlap' in headerb and headerb['iprange_allow_overlap']):
-                # FIXME: check overlap for internal IPs
-                continue
-
-            # check if there is overlap between a and b
-            overlap_low = max(a[0], b[0])
-            overlap_high = min(a[1], b[1])
-            if overlap_low <= overlap_high:
-                overlaps.append((overlap_low, overlap_high, filea, fileb))
-        if overlaps:
-            for overlap in overlaps:
-                logging.error("Found overlap from %s to %s in files %s and %s." % overlap)
-        return not bool(overlaps)
 
     def diff(self, otherhostlist):
         diff = types.SimpleNamespace()
@@ -244,3 +217,31 @@ class YMLHostlist(Hostlist):
                 h.vars['docker']['ports'] = [
                     str(h.ip) + ':' + port for port in h.vars['docker']['ports']
                 ]
+
+    def check_iprange_overlap(self):
+        "check whether any of the ipranges given in headers overlap"
+
+        overlaps = []
+        for ita, itb in itertools.combinations(self.fileheaders.items(), 2):
+            filea, headera = ita
+            fileb, headerb = itb
+            try:
+                a = headera['iprange']
+                b = headerb['iprange']
+            except KeyError:
+                # one of the files does not have iprange defined, ignore it
+                continue
+            if ('iprange_allow_overlap' in headera and headera['iprange_allow_overlap']) or \
+               ('iprange_allow_overlap' in headerb and headerb['iprange_allow_overlap']):
+                # FIXME: check overlap for internal IPs
+                continue
+
+            # check if there is overlap between a and b
+            overlap_low = max(a[0], b[0])
+            overlap_high = min(a[1], b[1])
+            if overlap_low <= overlap_high:
+                overlaps.append((overlap_low, overlap_high, filea, fileb))
+        if overlaps:
+            for overlap in overlaps:
+                logging.error("Found overlap from %s to %s in files %s and %s." % overlap)
+        return not bool(overlaps)

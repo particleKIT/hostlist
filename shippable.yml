@@ -7,10 +7,11 @@ python:
   - 3.5
 install:
   - pip install -r requirements.txt
-  - pip install flake8 flit pylint nose
+  - pip install flake8 flit nose
+  # - pip install pylint
 build:
   ci:
     - flake8 hostlist
-    - pylint hostlist
+    # - pylint hostlist
     - nosetests tests
     - flit wheel

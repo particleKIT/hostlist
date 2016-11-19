@@ -95,7 +95,6 @@ class YMLHost(Host):
     IPREGEXP = re.compile(r'^(' + _num + '\.){3}(' + _num + ')$')
     MACREGEXP = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
 
-
     def __init__(self, inputdata, hosttype, institute, header=None):
         """
         parses a config file line of the form
@@ -148,7 +147,7 @@ class YMLHost(Host):
             self.ip = ipaddress.ip_address(self.vars['ip'])
             assert isinstance(self.ip, ipaddress.IPv4Address)
         except:
-            raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.vars['ip'])) 
+            raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.vars['ip']))
         if 'mac' in self.vars:
             try:
                 assert self.MACREGEXP.match(self.vars['mac'])
@@ -179,4 +178,3 @@ class MAC(str):
     """
     def __new__(cls, value):
         return str.__new__(cls, value.lower().replace('-', ':'))
-

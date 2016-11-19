@@ -14,7 +14,7 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
-from . import host
+from hostlist import host
 
 # use termcolor when available, otherwise ignore
 try:
@@ -53,13 +53,13 @@ class Hostlist(list):
         """ensure nonunique flag agrees with nonunique_ips config"""
         success = True
         nonunique_ips = defaultdict(list)
-        for host in self:
-            ip_fit = str(host.ip) in Config["nonunique_ips"]
-            if ip_fit and host.vars['unique']:
-                nonunique_ips[str(host.ip)].append(host)
-            if not ip_fit and not host.vars['unique']:
+        for h in self:
+            ip_fit = str(h.ip) in Config["nonunique_ips"]
+            if ip_fit and h.vars['unique']:
+                nonunique_ips[str(h.ip)].append(h)
+            if not ip_fit and not h.vars['unique']:
                 logging.error("Host %s has nonunique ip flag, "
-                              "but its ip is not listed in the config." % host)
+                              "but its ip is not listed in the config." % h)
                 success = False
 
         for ip in nonunique_ips:
@@ -76,11 +76,11 @@ class Hostlist(list):
         success = True
         for cname in cnames:
             has_dest = False
-            for host in self:
-                if host.fqdn == cname.fqdn:
-                    logging.error("%s conflicts with %s." % (cname, host))
+            for h in self:
+                if h.fqdn == cname.fqdn:
+                    logging.error("%s conflicts with %s." % (cname, h))
                     success = False
-                if cname.dest == host.fqdn:
+                if cname.dest == h.fqdn:
                     has_dest = True
             if not has_dest:
                 logging.error("%s points to a non-existing host." % cname)
@@ -97,8 +97,8 @@ class Hostlist(list):
         tocheck_props = ['ip', 'mac', 'hostname']
         for prop in tocheck_props:
             inverselist[prop] = {}
-            for host in self:
-                myhostprop = getattr(host, prop)
+            for h in self:
+                myhostprop = getattr(h, prop)
                 if myhostprop is None:
                     continue
                 if prop == 'ip' and str(myhostprop) in Config["nonunique_ips"]:
@@ -106,24 +106,24 @@ class Hostlist(list):
                     continue
                 if myhostprop in inverselist[prop]:
                     logging.error("Found duplicate %s for hosts \n%s\n%s"
-                                  % (prop, inverselist[prop][myhostprop], host))
+                                  % (prop, inverselist[prop][myhostprop], h))
                     success = False
-                inverselist[prop][myhostprop] = host
+                inverselist[prop][myhostprop] = h
         return success
 
     def check_missing_mac_ip(self):
         """check if hosts are missing an ip or mac"""
 
         success = True
-        for host in self:
-            if 'needs_ip' in host.vars and host.vars['needs_ip'] and host.ip is None:
-                logging.error("Missing IP in %s " % host)
+        for h in self:
+            if 'needs_ip' in h.vars and h.vars['needs_ip'] and h.ip is None:
+                logging.error("Missing IP in %s " % h)
                 success = False
 
         if isinstance(self, YMLHostlist):
-            for host in self:
-                if host.vars['needs_mac'] and host.mac is None:
-                    logging.error("Missing MAC in %s " % host)
+            for h in self:
+                if h.vars['needs_mac'] and h.mac is None:
+                    logging.error("Missing MAC in %s " % h)
                     success = False
         return success
 
@@ -185,6 +185,7 @@ class DNSVSHostlist(Hostlist):
             ip, is_nonunique = data
             self.append(host.Host(hostname, ip, is_nonunique))
 
+
 class YMLHostlist(Hostlist):
     "Hostlist filed from yml file"
 
@@ -237,9 +238,9 @@ class YMLHostlist(Hostlist):
                 self.append(host.YMLHost(hostdata, hosttype, institute, header))
 
         # do replacements for docker
-        for ahost in self:
-            if 'docker' in ahost.vars and 'ports' in ahost.vars['docker']:
+        for h in self:
+            if 'docker' in h.vars and 'ports' in h.vars['docker']:
                 # prefix docker ports with container IP
-                ahost.vars['docker']['ports'] = [
-                    str(ahost.ip) + ':' + port for port in ahost.vars['docker']['ports']
+                h.vars['docker']['ports'] = [
+                    str(h.ip) + ':' + port for port in h.vars['docker']['ports']
                 ]

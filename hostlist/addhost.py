@@ -137,7 +137,7 @@ def get_mac(oldmacs):
                 except ValueError:
                     print("Please enter an integer.")
                 except IndexError:
-                    print("Please enter a value between 0 and %s" % str(len(macs)-1))
+                    print("Please enter a value between 0 and %s" % str(len(macs) - 1))
     return mac
 
 

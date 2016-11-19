@@ -89,19 +89,19 @@ class dnsvs_interface:
         # dependencies = self._execute(url=url, method="get")
         # if dependencies!=[]:
         #     if dependencies[0]['data']==str(host.ip):
-        #         logging.warning('Attempting to add already an existing A record.') 
+        #         logging.warning('Attempting to add already an existing A record.')
         #         return
         #     elif dependencies[0]['data']!=str(host.ip):
-        #         raise Exception('Attempting to overwrite an existing A record with a different one.') 
+        #         raise Exception('Attempting to overwrite an existing A record with a different one.')
 
         inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
         data = [
             {"param_list": [
-                {"name": "fqdn",    "new_value": host.fqdn+"."},
-                {"name": "data",    "new_value": str(host.ip)},
+                {"name": "fqdn", "new_value": host.fqdn + "."},
+                {"name": "data", "new_value": str(host.ip)},
                 {"name": "inttype", "new_value": inttype},
-                ]},
-            ]
+            ]},
+        ]
         json_string = json.dumps(data)
         self._execute(url=self.createurl, method="post", data=json_string)
 
@@ -109,7 +109,7 @@ class dnsvs_interface:
         """Remove an A record from the server."""
         # TODO: handle these errors in the response
         # before removing, check whether a cname points to that record
-        # https://www-net.scc.kit.edu/api/2.0/dns/record/list?target_fqdn_regexp=ttpseth.ttp.kit.edu.   
+        # https://www-net.scc.kit.edu/api/2.0/dns/record/list?target_fqdn_regexp=ttpseth.ttp.kit.edu.
         # url = self.root_url+"/record/list?type=CNAME&target_fqdn="+host.fqdn+"."
         # dependencies = self._execute(url=url, method="get")
         # if dependencies!=[]:
@@ -118,7 +118,7 @@ class dnsvs_interface:
         # dnsvs_records = self._execute(url=url, method="get")
         # if dnsvs_records!=[]:
         #     if dnsvs_records[0]['data']!=str(host.ip):
-        #         raise Exception('Attempting to remove an existing A record, for which the IP adress does not match.') 
+        #         raise Exception('Attempting to remove an existing A record, for which the IP adress does not match.')
         # else:
         #     logging.warning('Attempting to remove a nonexistent A record.')
         #     return
@@ -126,14 +126,14 @@ class dnsvs_interface:
         # TODO: can we use host.fqdn/host.ip here?
         # trust our data more then theirs
         inttype = self.inttype_a if host.vars['unique'] else self.inttype_nonunique
-                                                      
+
         data = [
             {"param_list": [
-                {"name": "fqdn",    "old_value": host.fqdn+"."},
-                {"name": "data",    "old_value": str(host.ip)},
+                {"name": "fqdn", "old_value": host.fqdn + "."},
+                {"name": "data", "old_value": str(host.ip)},
                 {"name": "inttype", "old_value": inttype},
-                ]},
-            ]
+            ]},
+        ]
         json_string = json.dumps(data)
         self._execute(url=self.deleteurl, method="post", data=json_string)
 
@@ -167,11 +167,11 @@ class dnsvs_interface:
         # write
         data = [
             {"param_list": [
-                {"name": "fqdn",    "new_value": fqdn+"."},
-                {"name": "data",    "new_value": dest+"."},
+                {"name": "fqdn", "new_value": fqdn + "."},
+                {"name": "data", "new_value": dest + "."},
                 {"name": "inttype", "new_value": self.inttype_cname},
-                ]},
-            ]
+            ]},
+        ]
         json_string = json.dumps(data)
         self._execute(url=self.createurl, method="post", data=json_string)
 
@@ -188,10 +188,10 @@ class dnsvs_interface:
         # remove
         data = [
             {"param_list": [
-                {"name": "fqdn",    "old_value": fqdn+"."},
-                {"name": "data",    "old_value": dest+"."},
+                {"name": "fqdn", "old_value": fqdn + "."},
+                {"name": "data", "old_value": dest + "."},
                 {"name": "inttype", "old_value": self.inttype_cname},
-                ]},
-            ]
+            ]},
+        ]
         json_string = json.dumps(data)
         self._execute(url=self.deleteurl, method="post", data=json_string)

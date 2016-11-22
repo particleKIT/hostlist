@@ -5,8 +5,8 @@ import json
 import os.path
 import logging
 
-from hostlist import host
-from hostlist import cnamelist
+from .. import host
+from .. import cnamelist
 
 
 class dnsvs_interface:

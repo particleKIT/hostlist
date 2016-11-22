@@ -2,7 +2,7 @@
 
 import logging
 
-from hostlist.dnsvs import dnsvs_webapi as dnsvs
+from . import dnsvs_webapi as dnsvs
 
 # use termcolor when available, otherwise ignore
 try:

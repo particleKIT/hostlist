@@ -179,6 +179,7 @@ def main():
     else:
         mac = get_mac(oldmacs)
 
+    user, end_date = "", ""
     if "notebook" in args.hostlist:
         sys.stdout.write("Enter user associated with notebook (leave empty to ignore): ")
         user = input()

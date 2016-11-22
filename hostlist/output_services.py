@@ -121,7 +121,7 @@ class AnsibleOutput(OutputBase):
     "Ansible inventory output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
+    def gen_content(cls, hostlist, cnames):
         """generate json inventory for ansible
         form:
             {
@@ -141,7 +141,7 @@ class AnsibleOutput(OutputBase):
             ...
 
         """
-        assert stdout, "Ansible Output only works for stdout"
+        # assert stdout, "Ansible Output only works for stdout"
         resultdict = defaultdict(lambda: {'hosts': []})
         hostvars = {}
         docker_services = {}
@@ -163,8 +163,7 @@ class AnsibleOutput(OutputBase):
         resultdict['vserverhost']['vars'] = {'docker_services': docker_services}
         resultdict['_meta'] = {'hostvars': hostvars}
 
-        jsonout = json.dumps(resultdict, sort_keys=True, indent=1)
-        cls.write(jsonout, None, stdout=True)
+        return resultdict
 
     @staticmethod
     def _gen_host_content(host):

@@ -14,7 +14,7 @@ try:
 except ImportError:
     from yaml import SafeLoader
 
-from hostlist import host
+from . import host
 
 # use termcolor when available, otherwise ignore
 try:

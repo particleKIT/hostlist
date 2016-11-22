@@ -8,13 +8,13 @@ import types
 from distutils.util import strtobool
 import sys
 
-from hostlist import hostlist
-from hostlist import cnamelist
-from hostlist import output_services
-from hostlist.config import CONFIGINSTANCE as Config
+from . import hostlist
+from . import cnamelist
+from . import output_services
+from .config import CONFIGINSTANCE as Config
 try:
-    from hostlist.dnsvs import sync
-    from hostlist.dnsvs import dnsvs_webapi as dnsvs
+    from .dnsvs import sync
+    from .dnsvs import dnsvs_webapi as dnsvs
     HAS_DNSVS = True
 except ImportError:
     HAS_DNSVS = False

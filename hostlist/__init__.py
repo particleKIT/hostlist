@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 "Sync hostlist and builds config files for services."
 
-from hostlist import buildfiles
+from . import buildfiles
 
 __version__ = '1.0.2'
 

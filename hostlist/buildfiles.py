@@ -145,7 +145,7 @@ def run_deploy():
                                  host])
 
 
-def run_servies(args, servicedict, file_hostlist, file_cnames):
+def run_services(args, servicedict, file_hostlist, file_cnames):
     "Run all services according to servicedict on hosts in file_hostlist."
     for service, start in servicedict.items():
         if start:
@@ -204,7 +204,7 @@ def main():
     if args.dnsvs or rundnsvs:
         sync_dnsvs(file_hostlist, file_cnames, args.dryrun)
 
-    run_servies(args, servicedict, file_hostlist, file_cnames)
+    run_services(args, servicedict, file_hostlist, file_cnames)
 
     if not args.quiet:
         subprocess.call(["git", "--no-pager", "diff", "-U0", "build"])

@@ -18,7 +18,8 @@ COPY init.sh /
 
 ENV REPOURL=https://github.com/particleKIT/hostlist
 ENV REPODIR=tests
-ENV REPOKEY=""
+ENV REPOSSHKEY=""
+ENV REPOHOSTKEY=""
 
 EXPOSE 80
 WORKDIR /data

@@ -1,9 +1,15 @@
 #!/bin/bash
 
-if [[ ! -z $REPOKEY ]]
+if [[ ! -z $REPOSSHKEY ]]
 then
-    mkdir ~/.ssh
+    mkdir -p ~/.ssh
     echo "$REPOKEY" > ~/.ssh/id_rsa
+fi
+
+if [[ ! -z $REPOHOSTKEY ]]
+then
+    mkdir -p ~/.ssh
+    echo "$REPOHOSTKEY" > ~/.ssh/known_hosts
 fi
 
 git clone $REPOURL /data

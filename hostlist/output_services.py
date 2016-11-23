@@ -11,30 +11,22 @@ from .config import CONFIGINSTANCE as Config
 class OutputBase:
     "Baseclass for output services"
 
-    @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
-        "Return output for requested service"
-        pass
-
     @staticmethod
-    def write(content, buildname, stdout=False):
-        "Write content to a file or stdout"
-        if stdout:
-            print(content)
-        else:
-            builddir = Config["builddir"]
-            if not os.path.isdir(builddir):
-                os.mkdir(builddir)
-            fname = builddir + buildname
-            with open(fname, 'w') as f:
-                f.write(content)
+    def write(content, buildname):
+        "Write content to a file"
+        builddir = Config["builddir"]
+        if not os.path.isdir(builddir):
+            os.mkdir(builddir)
+        fname = builddir + buildname
+        with open(fname, 'w') as f:
+            f.write(content)
 
 
 class Ssh_Known_HostsOutput(OutputBase):
     "Generate hostlist for ssh-keyscan"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
+    def gen_content(cls, hostlist, cnames, write=True):
         # only scan keys on hosts that are in ansible
         scan_hosts = [h for h in hostlist if h.vars.get('gen_ssh_known_hosts', False)]
         aliases = [alias
@@ -48,30 +40,36 @@ class Ssh_Known_HostsOutput(OutputBase):
 
         fcont = '\n'.join(aliases)
 
-        cls.write(fcont, Config["ssh"]["hostlist"], stdout)
-        logging.debug("wrote ssh hostlist to file")
+        if write:
+            cls.write(fcont, Config["ssh"]["hostlist"])
+            logging.debug("wrote ssh hostlist to file")
+        return fcont
 
 
 class HostsOutput(OutputBase):
     "Config output for /etc/hosts format"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
+    def gen_content(cls, hostlist, cnames, write=True):
         hoststrings = (str(h.ip) + " " + " ".join(h.aliases) for h in hostlist if h.ip)
         content = '\n'.join(hoststrings)
-        cls.write(content, Config["hosts"]["build"], stdout)
+        if write:
+            cls.write(content, Config["hosts"]["build"])
+        return content
 
 
 class MuninOutput(OutputBase):
     "Config output for Munin"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
+    def gen_content(cls, hostlist, cnames, write=True):
         hostnames = (h for h in hostlist if h.vars.get('gen_munin', False) and h.publicip)
         fcont = ''
         for host in hostnames:
             fcont += cls._get_hostblock(host)
-        cls.write(fcont, Config["munin"]["build"], stdout)
+        if write:
+            cls.write(fcont, Config["munin"]["build"])
+        return fcont
 
     @staticmethod
     def _get_hostblock(host):
@@ -90,7 +88,7 @@ class DhcpOutput(OutputBase):
     "DHCP config output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
+    def gen_content(cls, hostlist, cnames, write=True):
         dhcpout = ""
         dhcp_internal = ""
         for host in hostlist:
@@ -101,8 +99,10 @@ class DhcpOutput(OutputBase):
                 dhcp_internal += entry + '\n'
             else:
                 dhcpout += entry + '\n'
-        cls.write(dhcpout, Config["dhcp"]["build"], stdout)
-        cls.write(dhcp_internal, Config["dhcp"]["build_internal"], stdout)
+        if write:
+            cls.write(dhcpout, Config["dhcp"]["build"])
+            cls.write(dhcp_internal, Config["dhcp"]["build_internal"])
+        return dhcpout
 
     @staticmethod
     def _gen_hostline(host):
@@ -120,7 +120,7 @@ class AnsibleOutput(OutputBase):
     "Ansible inventory output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist, cnames, write=False):
         """generate json inventory for ansible
         form:
             {
@@ -140,7 +140,7 @@ class AnsibleOutput(OutputBase):
             ...
 
         """
-        # assert stdout, "Ansible Output only works for stdout"
+        assert not write, "Ansible Output only works for stdout"
         resultdict = defaultdict(lambda: {'hosts': []})
         hostvars = {}
         docker_services = {}
@@ -159,8 +159,9 @@ class AnsibleOutput(OutputBase):
                 docker_services[host.hostname]['fqdn'] = host.fqdn
                 docker_services[host.hostname]['ip'] = str(host.ip)
 
-        resultdict['vserverhost']['vars'] = {'docker_services': docker_services}
         resultdict['_meta'] = {'hostvars': hostvars}
+        if docker_services:
+            resultdict['vserverhost']['vars'] = {'docker_services': docker_services}
 
         return resultdict
 
@@ -188,10 +189,11 @@ class EthersOutput(OutputBase):
     "/etc/ethers format output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, stdout):
+    def gen_content(cls, hostlist, cnames, write=False):
         entries = (
             "%s %s" % (host.mac, host.fqdn) for host in hostlist
             if host.mac
         )
         out = '\n'.join(entries)
-        cls.write(out, Config["ethers"], stdout)
+        if write:
+            cls.write(out, Config["ethers"])

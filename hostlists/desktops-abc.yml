@@ -2,9 +2,13 @@
 header:
   some_var: default value
 hosts:
-  - hostname: host1.abc.example.com
+  - hostname: host3.abc.example.com
     mac: 00:12:34:ab:CD:EF
     ip: 198.51.100.3
-  - hostname: host2.abc.example.com
+  - hostname: host4.abc.example.com
     mac: 00:12:34:ab:CD:FF
     ip: 198.51.100.4
+  - hostname: host5.abc.example.com
+    mac: 00:12:34:ab:CD:F1
+    ip: 198.51.100.5
+    gen_munin: True

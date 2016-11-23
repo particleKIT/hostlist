@@ -152,7 +152,7 @@ def run_services(args, servicedict, file_hostlist, file_cnames):
             outputcls = getattr(output_services, service.title() + "Output", None)
             if outputcls:
                 logging.info("generating output for " + service)
-                outputcls.gen_content(file_hostlist, file_cnames, args.stdout)
+                outputcls.gen_content(file_hostlist, file_cnames, write=not args.stdout)
             else:
                 logging.error("missing make function for " + service)
 

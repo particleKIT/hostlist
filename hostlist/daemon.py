@@ -20,7 +20,6 @@ class HostAPI():
 
     @cherrypy.expose
     @cherrypy.tools.json_out()
-    @cherrypy.tools.accept(media='text/plain')
     def ansible(self):
         self.get_hostlist()
         return output_services.AnsibleOutput.gen_content(
@@ -29,13 +28,17 @@ class HostAPI():
         )
 
     @cherrypy.expose
-    @cherrypy.tools.accept(media='text/plain')
     def munin(self):
         self.get_hostlist()
         return output_services.MuninOutput.gen_content(
             self.hosts,
             self.cnames,
         )
+
+    @cherrypy.expose
+    def index(self):
+        self.get_hostlist()
+        return 'See <a href="https://github.com/particleKIT/hostlist">github.com/particleKIT/hostlist</a> how to use this API.'
 
 
 def main():

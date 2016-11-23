@@ -12,5 +12,5 @@ build:
   ci:
     - flake8 hostlist
     # - pylint hostlist
-    - nosetests tests
+    - cd tests && nosetests .
     - flit wheel

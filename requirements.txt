@@ -2,3 +2,4 @@ PyYAML
 termcolor
 requests
 cherrypy
+GitPython

@@ -5,6 +5,7 @@
 # import sys
 
 import cherrypy
+import git
 
 from . import hostlist
 from . import cnamelist
@@ -12,9 +13,13 @@ from . import output_services
 # from hostlist.config import CONFIGINSTANCE as Config
 
 
-class HostAPI():
+class Inventory():
+
+    def __init__(self):
+        self.repo = git.cmd.Git('.') 
 
     def get_hostlist(self):
+        self.repo.pull()
         self.hosts = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()
 
@@ -46,7 +51,7 @@ def main():
         'server.socket_host': '0.0.0.0',
         'server.socket_port': 80,
     })
-    cherrypy.quickstart(HostAPI())
+    cherrypy.quickstart(Inventory())
 
 
 if __name__ == '__main__':

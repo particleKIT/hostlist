@@ -1,6 +1,8 @@
 FROM python:alpine
 MAINTAINER robin.roth@kit.edu
 
+RUN apk add --no-cache bash git
+
 COPY flit.ini requirements.txt README.rst /hostlist/
 COPY hostlist /hostlist/hostlist
 COPY tests /hostlist/tests
@@ -11,10 +13,14 @@ RUN pip install flit
 RUN cd /hostlist && \
     pip install -r requirements.txt && \
     flit install
+    
+COPY init.sh /
+
+ENV REPOURL=https://github.com/particleKIT/hostlist
+ENV REPODIR=tests
+ENV REPOKEY=""
 
 EXPOSE 80
-
-VOLUME /data
 WORKDIR /data
 
-ENTRYPOINT hostlist-daemon
+ENTRYPOINT /init.sh

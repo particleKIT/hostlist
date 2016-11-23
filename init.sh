@@ -3,7 +3,7 @@
 if [[ ! -z $REPOSSHKEY ]]
 then
     mkdir -p ~/.ssh
-    echo "$REPOSSHKEY" > ~/.ssh/id_rsa
+    echo -e "$REPOSSHKEY" > ~/.ssh/id_rsa
     chmod 600 ~/.ssh/id_rsa
 fi
 

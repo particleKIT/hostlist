@@ -16,7 +16,7 @@ from . import output_services
 class Inventory():
 
     def __init__(self):
-        self.repo = git.cmd.Git('.') 
+        self.repo = git.cmd.Git('.')
 
     def get_hostlist(self):
         self.repo.pull()

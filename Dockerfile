@@ -1,7 +1,7 @@
 FROM python:alpine
 MAINTAINER robin.roth@kit.edu
 
-RUN apk add --no-cache bash git
+RUN apk add --no-cache bash git ssh
 
 COPY flit.ini requirements.txt README.rst /hostlist/
 COPY hostlist /hostlist/hostlist

@@ -19,3 +19,5 @@ build:
     - flit install
     - cd tests && nosetests .
     # TODO: run container and check output
+env:
+  - FLIT_ROOT_INSTALL=1

@@ -15,14 +15,6 @@ except ImportError:
     from yaml import SafeLoader
 
 from . import host
-
-# use termcolor when available, otherwise ignore
-try:
-    from termcolor import colored
-except ImportError:
-    def colored(text, col):
-        return text
-
 from .config import CONFIGINSTANCE as Config
 
 

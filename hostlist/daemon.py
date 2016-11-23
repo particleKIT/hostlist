@@ -42,6 +42,10 @@ class HostAPI():
 
 
 def main():
+    cherrypy.config.update({
+            'server.socket_host': '0.0.0.0',
+            'server.socket_port': 80,
+            })
     cherrypy.quickstart(HostAPI())
 
 

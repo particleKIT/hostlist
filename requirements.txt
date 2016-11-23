@@ -1,3 +1,4 @@
 PyYAML
 termcolor
 requests
+cherrypy

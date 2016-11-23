@@ -9,8 +9,13 @@ install:
   - pip install flake8 flit nose
   # - pip install pylint
 build:
+  pre_ci:
+    - docker build -t hostlist:latest .
+    - docker rm -f hostlist || true
   ci:
     - flake8 hostlist
     # - pylint hostlist
-    - cd tests && nosetests .
     - flit wheel
+    - flit install
+    - cd tests && nosetests .
+    # TODO: run container and check output

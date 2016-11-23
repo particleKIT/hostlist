@@ -8,7 +8,7 @@ from . import dnsvs_webapi as dnsvs
 try:
     from termcolor import colored
 except ImportError:
-    def colored(text, col):
+    def colored(text, _):
         return text
 
 

@@ -4,6 +4,7 @@ if [[ ! -z $REPOSSHKEY ]]
 then
     mkdir -p ~/.ssh
     echo "$REPOKEY" > ~/.ssh/id_rsa
+    chmod 600 ~/.ssh/id_rsa
 fi
 
 if [[ ! -z $REPOHOSTKEY ]]

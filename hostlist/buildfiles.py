@@ -40,11 +40,6 @@ def parse_args(services):
                         action='store_true',
                         help='only create build files, but don\'t deploy')
 
-    parser.add_argument('--stdout',
-                        action='store_true',
-                        help='Output to stdout instead of writing to a file.'
-                        ' Only implemented for ssh_known_hosts so far.')
-
     parser.add_argument('--dnsvs',
                         action='store_true',
                         help='sync with dnsvs')
@@ -152,7 +147,7 @@ def run_services(args, servicedict, file_hostlist, file_cnames):
             outputcls = getattr(output_services, service.title() + "Output", None)
             if outputcls:
                 logging.info("generating output for " + service)
-                outputcls.gen_content(file_hostlist, file_cnames, write=not args.stdout)
+                out = outputcls.gen_content(file_hostlist, file_cnames, write=True)
             else:
                 logging.error("missing make function for " + service)
 
@@ -169,10 +164,6 @@ def main():
     services = ['dhcp', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']
     args = parse_args(services)
 
-    if args.stdout:
-        args.quiet = True
-        args.dryrun = True
-
     logging.getLogger().setLevel(logging.INFO)
     if args.verbose >= 1:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -182,10 +173,6 @@ def main():
     # get a dict of the arguments
     argdict = vars(args)
     servicedict = {s: argdict[s] for s in services}
-
-    if args.stdout and not sum(servicedict.values()) == 1:
-        logging.error("For stdout output exactly one service has to be enabled.")
-        sys.exit(1)
 
     logging.info("loading hostlist from yml files")
     file_hostlist = hostlist.YMLHostlist()

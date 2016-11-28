@@ -7,7 +7,6 @@
 import git
 import logging
 import datetime
-import os.path
 import cherrypy
 
 from . import hostlist
@@ -22,7 +21,7 @@ class Inventory():
         self.repo = git.Repo('.')
         self.last_update = None
         self.fetch_hostlist()
-        
+
     def fetch_hostlist(self, timeout=600):
         if self.last_update and datetime.datetime.now() - self.last_update < datetime.timedelta(seconds=timeout):
             return

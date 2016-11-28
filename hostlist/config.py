@@ -14,8 +14,10 @@ class Config(dict):
             with open(self.CONFIGNAME, 'r') as configfile:
                 self.update(yaml.safe_load(configfile))
             logging.info("loaded " + self.CONFIGNAME)
+            self.loaded = True
         except:
             logging.error("failed to load " + self.CONFIGNAME)
+            self.loaded = False
 
 
 CONFIGINSTANCE = Config()

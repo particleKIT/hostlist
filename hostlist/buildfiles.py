@@ -160,6 +160,10 @@ def run_services(args, servicedict, file_hostlist, file_cnames):
 def main():
     "main routine"
 
+    if not Config.loaded:
+        logging.error("Need %s file to run." % Config.CONFIGNAME)
+        sys.exit(1)
+
     logging.basicConfig(format='%(levelname)s:%(message)s')
 
     services = ['dhcp', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']

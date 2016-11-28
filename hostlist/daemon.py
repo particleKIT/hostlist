@@ -78,6 +78,7 @@ def _auth_config(app):
 
 
 def main():
+    cherrypy.config.update('daemon.conf')
     app = cherrypy.tree.mount(Inventory(), '/', 'daemon.conf')
     _auth_config(app)
     cherrypy.engine.signals.subscribe()

@@ -18,7 +18,10 @@ from . import output_services
 class Inventory():
 
     def __init__(self):
-        self.repo = git.Repo('.')
+        try:
+            self.repo = git.Repo('.')
+        except git.InvalidGitRepositoryError:
+            self.repo = git.Repo('../')
         self.last_update = None
         self.fetch_hostlist()
 

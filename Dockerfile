@@ -14,12 +14,17 @@ RUN cd /hostlist && \
     pip install -r requirements.txt && \
     flit install
     
-COPY init.sh /
+COPY docker/init.sh /
 
 ENV REPOURL=https://github.com/particleKIT/hostlist
 ENV REPODIR=tests
 ENV REPOSSHKEY=""
 ENV REPOHOSTKEY=""
+ENV SSLCERT=""
+ENV SSLPRIVATE=""
+ENV SSLCHAIN=""
+
+VOLUME /ssl
 
 EXPOSE 80
 WORKDIR /data

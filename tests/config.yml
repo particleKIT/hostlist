@@ -10,24 +10,3 @@ nonunique_ips:
   - 198.51.100.10
 
 hostlistdir: hostlists/
-builddir: build/
-
-dhcp:
-  build: dhcpd-hosts.conf.external
-  build_internal: dhcpd-hosts.conf.internal
-
-ethers: ethers
-
-deployhosts:
-  - 'dhcp1.example.com'
-  - 'dhcp2.example.com'
-
-munin:
-  inventory: munin/hosts
-  build: muninhosts
-
-hosts:
-  build: hosts
-
-ssh:
-  hostlist: ssh-keyscan_hosts

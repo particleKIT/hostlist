@@ -8,25 +8,11 @@ import logging
 from .config import CONFIGINSTANCE as Config
 
 
-class OutputBase:
-    "Baseclass for output services"
-
-    @staticmethod
-    def write(content, buildname):
-        "Write content to a file"
-        builddir = Config["builddir"]
-        if not os.path.isdir(builddir):
-            os.mkdir(builddir)
-        fname = builddir + buildname
-        with open(fname, 'w') as f:
-            f.write(content)
-
-
-class Ssh_Known_HostsOutput(OutputBase):
+class Ssh_Known_HostsOutput:
     "Generate hostlist for ssh-keyscan"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, write=True):
+    def gen_content(cls, hostlist, cnames):
         # only scan keys on hosts that are in ansible
         scan_hosts = [h for h in hostlist if h.vars.get('gen_ssh_known_hosts', False)]
         aliases = [alias
@@ -40,35 +26,28 @@ class Ssh_Known_HostsOutput(OutputBase):
 
         fcont = '\n'.join(aliases)
 
-        if write:
-            cls.write(fcont, Config["ssh"]["hostlist"])
-            logging.debug("wrote ssh hostlist to file")
         return fcont
 
 
-class HostsOutput(OutputBase):
+class HostsOutput:
     "Config output for /etc/hosts format"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, write=True):
+    def gen_content(cls, hostlist, cnames):
         hoststrings = (str(h.ip) + " " + " ".join(h.aliases) for h in hostlist if h.ip)
         content = '\n'.join(hoststrings)
-        if write:
-            cls.write(content, Config["hosts"]["build"])
         return content
 
 
-class MuninOutput(OutputBase):
+class MuninOutput:
     "Config output for Munin"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, write=True):
+    def gen_content(cls, hostlist, cnames):
         hostnames = (h for h in hostlist if h.vars.get('gen_munin', False) and h.publicip)
         fcont = ''
         for host in hostnames:
             fcont += cls._get_hostblock(host)
-        if write:
-            cls.write(fcont, Config["munin"]["build"])
         return fcont
 
     @staticmethod
@@ -84,30 +63,24 @@ class MuninOutput(OutputBase):
         return cont
 
 
-class DhcpOutput(OutputBase):
+class DhcpOutput:
     "DHCP config output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, write=True):
-        dhcpout = ""
-        dhcp_internal = ""
+    def gen_content(cls, hostlist, cnames, external=True):
+        out = ""
         for host in hostlist:
             entry = cls._gen_hostline(host)
             if not entry:
                 continue
-            if host.ip in ipaddress.ip_network(Config['iprange']['internal']):
-                dhcp_internal += entry + '\n'
-            else:
-                dhcpout += entry + '\n'
-        if write:
-            cls.write(dhcpout, Config["dhcp"]["build"])
-            cls.write(dhcp_internal, Config["dhcp"]["build_internal"])
-        return dhcpout
+            if external == host.ip in ipaddress.ip_network(Config['iprange']['external']):
+                out += entry + '\n'
+        return out
 
     @staticmethod
     def _gen_hostline(host):
         if host.mac and host.ip:
-            # curly brackets doubled for python format funciton
+            # curly brackets doubled for python format function
             return """host {fqdn} {{
         hardware ethernet {mac};
         fixed-address {ip};
@@ -116,11 +89,11 @@ class DhcpOutput(OutputBase):
         }}""".format(fqdn=host.fqdn, mac=host.mac, ip=host.ip, hostname=host.hostname, domain=host.domain)
 
 
-class AnsibleOutput(OutputBase):
+class AnsibleOutput:
     "Ansible inventory output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, write=False):
+    def gen_content(cls, hostlist, cnames):
         """generate json inventory for ansible
         form:
             {
@@ -140,7 +113,6 @@ class AnsibleOutput(OutputBase):
             ...
 
         """
-        assert not write, "Ansible Output only works for stdout"
         resultdict = defaultdict(lambda: {'hosts': []})
         hostvars = {}
         docker_services = {}
@@ -184,16 +156,14 @@ class AnsibleOutput(OutputBase):
         return result
 
 
-class EthersOutput(OutputBase):
+class EthersOutput:
     "/etc/ethers format output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames, write=False):
+    def gen_content(cls, hostlist, cnames):
         entries = (
             "%s %s" % (host.mac, host.fqdn) for host in hostlist
             if host.mac
         )
         out = '\n'.join(entries)
-        if write:
-            cls.write(out, Config["ethers"])
         return out

@@ -109,7 +109,6 @@ class YMLHost(Host):
             for var, value in header.items():
                 self.vars[var] = value
             self.groups.update(header.get('groups', {}))
-            self.groups.difference_update(header.get('notgroups', {}))
 
         for var, value in inputdata.items():
             self.vars[var] = value

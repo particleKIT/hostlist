@@ -30,7 +30,7 @@ class TestGroup():
         data = dict(ansout)
         pprint(data)
         assert data['_meta']['hostvars']['host4.abc.example.com']['ip'] == '198.51.100.4'
-        assert data['server']['hosts'] == ['serv1.abc.example.com']
+        assert data['server']['hosts'] == ['serv1.abc.example.com', 'serv2.abc.example.com']
         assert data['superserver']['hosts'] == ['serv1.abc.example.com']
-        assert data['serverheadergroup']['hosts'] == ['serv1.abc.example.com']
+        assert data['serverheadergroup']['hosts'] == ['serv1.abc.example.com', 'serv2.abc.example.com']
         assert data['blubberinst']['hosts'] == ['serv1.abc.example.com']

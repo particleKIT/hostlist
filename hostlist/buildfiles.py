@@ -3,10 +3,10 @@
 
 import argparse
 import logging
-import subprocess
 import types
 from distutils.util import strtobool
 import sys
+import json
 
 from . import hostlist
 from . import cnamelist
@@ -101,9 +101,12 @@ def run_service(service, file_hostlist, file_cnames):
     if outputcls:
         logging.info("generating output for " + service)
         out = outputcls.gen_content(file_hostlist, file_cnames)
-        print(out)
+        if isinstance(out, str):
+            print(out)
+        else:
+            print(json.dumps(out, indent=2))
     else:
-        logging.error("missing make function for " + service)
+        logging.critical("missing make function for " + service)
 
 
 def main():
@@ -118,15 +121,21 @@ def main():
     services = ['dhcp', 'dhcpinternal', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']
     args = parse_args(services)
 
+    # get a dict of the arguments
+    argdict = vars(args)
+    activeservices = {s for s in services if argdict[s]}
+    
+    if activeservices:
+        if len(activeservices) > 1:
+            logging.error("Can only output one service at a time.")
+            sys.exit(2)
+        args.quiet = True
+
     logging.getLogger().setLevel(logging.INFO)
     if args.verbose >= 1:
         logging.getLogger().setLevel(logging.DEBUG)
     if args.quiet:
         logging.getLogger().setLevel(logging.CRITICAL)
-
-    # get a dict of the arguments
-    argdict = vars(args)
-    activeservices = {s for s in services if argdict[s]}
 
     logging.info("loading hostlist from yml files")
     file_hostlist = hostlist.YMLHostlist()
@@ -135,15 +144,10 @@ def main():
 
     file_hostlist.check_consistency(file_cnames)
 
-    # run set of default operations when none specified
     if activeservices:
-        if len(activeservices) > 1:
-            logging.error("Can only output one service at a time.")
-            sys.exit(2)
-        logging.getLogger().setLevel(logging.CRITICAL)
         run_service(activeservices.pop(), file_hostlist, file_cnames)
 
-    if not dryrun:
+    if not args.dryrun:
         sync_dnsvs(file_hostlist, file_cnames, args.dryrun)
 
     if not args.quiet:

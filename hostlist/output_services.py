@@ -73,7 +73,7 @@ class DhcpOutput:
             entry = cls._gen_hostline(host)
             if not entry:
                 continue
-            if external == host.ip in ipaddress.ip_network(Config['iprange']['external']):
+            if external == (host.ip in ipaddress.ip_network(Config['iprange']['external'])):
                 out += entry + '\n'
         return out
 
@@ -87,6 +87,13 @@ class DhcpOutput:
         option host-name "{hostname}";
         option domain-name "{domain}";
         }}""".format(fqdn=host.fqdn, mac=host.mac, ip=host.ip, hostname=host.hostname, domain=host.domain)
+
+
+class DhcpinternalOutput:
+
+    @staticmethod
+    def gen_content(hostlist, cnames):
+        return DhcpOutput.gen_content(hostlist, cnames, external=False)
 
 
 class AnsibleOutput:

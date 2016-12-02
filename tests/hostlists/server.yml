@@ -1,0 +1,11 @@
+---
+header:
+  some_var: default value
+  groups:
+    - serverheadergroup
+hosts:
+  - hostname: serv1.abc.example.com
+    ip: 198.51.100.3
+    institute: blubberinst
+    groups:
+      - superserver

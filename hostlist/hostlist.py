@@ -156,7 +156,9 @@ class YMLHostlist(Hostlist):
     def __init__(self):
         super().__init__()
         self.fileheaders = {}
+        self.groups = defaultdict(list)
         input_ymls = sorted(glob.glob(Config["hostlistdir"] + '/*.yml'))
+        logging.debug("Using %s" % ', '.join(input_ymls))
         for inputfile in input_ymls:
             self._add_ymlhostfile(inputfile)
 
@@ -187,21 +189,28 @@ class YMLHostlist(Hostlist):
             return
 
         for yamlout in yamlsections:
-            if 'header' not in yamlout:
-                logging.error('missing header field in %s' % fname)
-            if 'hosts' not in yamlout:
-                logging.error('missing hosts field in %s' % fname)
+            self._parse_section(yamlout, fname, hosttype, institute)
 
-            header = yamlout['header']
-            if 'iprange' in header:
-                ipstart, ipend = header['iprange']
-                header['iprange'] = ipaddress.ip_address(ipstart), ipaddress.ip_address(ipend)
-            self.fileheaders[os.path.basename(fname)] = header
+        self._fix_docker_ports()
 
-            for hostdata in yamlout["hosts"]:
-                self.append(host.YMLHost(hostdata, hosttype, institute, header))
+    def _parse_section(self, yamlout, fname, hosttype, institute):
+        for field in ('header', 'hosts'):
+            if field not in yamlout:
+                logging.error('missing field %s in %s' % (field, fname))
 
-        # do replacements for docker
+        header = yamlout['header']
+        if 'iprange' in header:
+            ipstart, ipend = header['iprange']
+            header['iprange'] = ipaddress.ip_address(ipstart), ipaddress.ip_address(ipend)
+        self.fileheaders[os.path.basename(fname)] = header
+
+        for hostdata in yamlout["hosts"]:
+            newhost = host.YMLHost(hostdata, hosttype, institute, header)
+            self.append(newhost)
+            for group in newhost.groups:
+                self.groups[group].append(newhost)
+
+    def _fix_docker_ports(self):
         for h in self:
             if 'docker' in h.vars and 'ports' in h.vars['docker']:
                 # prefix docker ports with container IP

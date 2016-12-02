@@ -1,13 +1,21 @@
 ---
 header:
   some_var: default value
+  groups:
+    - headergroup
 hosts:
   - hostname: host3.abc.example.com
     mac: 00:12:34:ab:CD:EF
     ip: 198.51.100.3
+    groups:
+      - extragroup
   - hostname: host4.abc.example.com
     mac: 00:12:34:ab:CD:FF
     ip: 198.51.100.4
+    notgroups:
+      - headergroup
+    groups:
+      - othergroup
   - hostname: host5.abc.example.com
     mac: 00:12:34:ab:CD:F1
     ip: 198.51.100.5

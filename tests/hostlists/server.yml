@@ -5,7 +5,8 @@ header:
     - serverheadergroup
 hosts:
   - hostname: serv1.abc.example.com
-    ip: 198.51.100.3
+    ip: 198.51.100.100
     institute: blubberinst
     groups:
       - superserver
+    needs_mac: False

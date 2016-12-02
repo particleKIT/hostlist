@@ -103,9 +103,7 @@ class YMLHost(Host):
         self._set_defaults()
         self.vars['hosttype'] = hosttype
         self.vars['institute'] = institute
-        self.groups = {hosttype}
-        if institute is not None:
-            self.groups.update({institute, institute + hosttype})
+        self.groups = set()
 
         if header:
             for var, value in header.items():
@@ -115,13 +113,16 @@ class YMLHost(Host):
 
         for var, value in inputdata.items():
             self.vars[var] = value
-
         self.groups.update(inputdata.get('groups', {}))
         self.groups.difference_update(inputdata.get('notgroups', {}))
 
         if 'hostname' not in self.vars:
             raise Exception("Entry without hostname.")
         self.hostname = self.vars['hostname']
+
+        if not self.vars['institute']:
+            raise Exception("No institute given for %s." % self.hostname)
+        self.groups.update({hosttype, self.vars['institute'], self.vars['institute'] + hosttype})
 
         self._check_vars()
         self._check_user()
@@ -167,9 +168,6 @@ class YMLHost(Host):
                 self.mac = MAC(self.vars['mac'])
             except:
                 raise Exception("Host %s does not have a valid MAC address (%s)." % (self.hostname, self.mac))
-
-        if not self.vars['institute']:
-            raise Exception("No institute given for %s." % self.hostname)
 
     def _check_iprange(self, iprange):
         "Check whether the given IP is in the range defined at the file header."

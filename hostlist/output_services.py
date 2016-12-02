@@ -168,11 +168,10 @@ class AnsibleOutput(OutputBase):
     @staticmethod
     def _gen_host_content(host):
         "Generate output for one host"
-        hostgroups = [host.vars['institute'], host.vars['hosttype'], host.vars['institute'] + host.vars['hosttype']]
 
         result = {
             'fqdn': host.fqdn,
-            'groups': hostgroups,
+            'groups': host.groups,
             'vars': {},
         }
         if host.ip:

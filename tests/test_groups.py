@@ -2,6 +2,8 @@
 
 from hostlist import hostlist
 from hostlist import cnamelist
+from hostlist import output_services
+from pprint import pprint
 
 
 class TestGroup():
@@ -22,3 +24,13 @@ class TestGroup():
     def testservergroup(self):
         assert self.hosts.groups['superserver'][0].fqdn == 'serv1.abc.example.com'
         assert len(self.hosts.groups['superserver']) == 1
+
+    def testansiblegroups(self):
+        ansout = output_services.AnsibleOutput().gen_content(self.hosts, self.cnames)
+        data = dict(ansout)
+        pprint(data)
+        assert data['_meta']['hostvars']['host4.abc.example.com']['ip'] == '198.51.100.4'
+        assert data['server']['hosts'] == ['serv1.abc.example.com']
+        assert data['superserver']['hosts'] == ['serv1.abc.example.com']
+        assert data['serverheadergroup']['hosts'] == ['serv1.abc.example.com']
+        assert data['blubberinst']['hosts'] == ['serv1.abc.example.com']

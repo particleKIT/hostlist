@@ -124,7 +124,7 @@ def main():
     # get a dict of the arguments
     argdict = vars(args)
     activeservices = {s for s in services if argdict[s]}
-    
+
     if activeservices:
         if len(activeservices) > 1:
             logging.error("Can only output one service at a time.")

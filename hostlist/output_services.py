@@ -2,8 +2,6 @@
 
 from collections import defaultdict
 import ipaddress
-import os
-import logging
 
 from .config import CONFIGINSTANCE as Config
 

@@ -38,11 +38,7 @@ def parse_args(services):
     parser.add_argument('--dryrun',
                         '-d',
                         action='store_true',
-                        help='only create build files, but don\'t deploy')
-
-    parser.add_argument('--dnsvs',
-                        action='store_true',
-                        help='sync with dnsvs')
+                        help='only parse, don\'t sync')
 
     for service in services:
         parser.add_argument('--' + service,
@@ -99,57 +95,15 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
                 sync.apply_diff(total_diff)
 
 
-def run_deploy():
-    "Deploy DNS/DHCP settings to servers"
-
-    deployhosts = Config['deployhosts']
-    for host in deployhosts:
-        print("Do you want to deploy to %s? (y/n)" % host)
-        choice = input().lower()
-        if choice != '' and strtobool(choice):
-            print("Please enter deploy password:")
-            ssh_res = subprocess.check_call([
-                'ssh', "root@%s" % host,
-                '-o', 'ControlPath=~/.ssh/controlmasters-%r@%h:%p',
-                '-o', 'ControlMaster=auto',
-                'echo', 'success'
-            ])
-            if ssh_res != 0:
-                logging.error("Failed to establigh ssh connection to %s."
-                              " Skipping deploy.", host)
-                continue
-            print("Running in checkmode with diff first.")
-            try:
-                stdout = subprocess.check_output([
-                    "ansible-playbook",
-                    '--check',
-                    '--diff',
-                    "copy_dns_dhcp_to_server.yml",
-                    "-l",
-                    host])
-            except subprocess.CalledProcessError:
-                logging.error("Ansible check failed, skipping deploy.")
-                continue
-            print(stdout.decode())
-            print("Do you really want to deploy to %s? (y/n)" % host)
-            choice = input().lower()
-            if choice != '' and strtobool(choice):
-                subprocess.call(["ansible-playbook",
-                                 "copy_dns_dhcp_to_server.yml",
-                                 "-l",
-                                 host])
-
-
-def run_services(args, servicedict, file_hostlist, file_cnames):
+def run_service(service, file_hostlist, file_cnames):
     "Run all services according to servicedict on hosts in file_hostlist."
-    for service, start in servicedict.items():
-        if start:
-            outputcls = getattr(output_services, service.title() + "Output", None)
-            if outputcls:
-                logging.info("generating output for " + service)
-                out = outputcls.gen_content(file_hostlist, file_cnames)
-            else:
-                logging.error("missing make function for " + service)
+    outputcls = getattr(output_services, service.title() + "Output", None)
+    if outputcls:
+        logging.info("generating output for " + service)
+        out = outputcls.gen_content(file_hostlist, file_cnames)
+        print(out)
+    else:
+        logging.error("missing make function for " + service)
 
 
 def main():
@@ -161,7 +115,7 @@ def main():
 
     logging.basicConfig(format='%(levelname)s:%(message)s')
 
-    services = ['dhcp', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']
+    services = ['dhcp', 'dhcpinternal', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']
     args = parse_args(services)
 
     logging.getLogger().setLevel(logging.INFO)
@@ -172,7 +126,7 @@ def main():
 
     # get a dict of the arguments
     argdict = vars(args)
-    servicedict = {s: argdict[s] for s in services}
+    activeservices = {s for s in services if argdict[s]}
 
     logging.info("loading hostlist from yml files")
     file_hostlist = hostlist.YMLHostlist()
@@ -181,27 +135,16 @@ def main():
 
     file_hostlist.check_consistency(file_cnames)
 
-    rundeploy = False
-    rundnsvs = False
     # run set of default operations when none specified
-    if not any(servicedict.values()):
-        servicedict['dhcp'] = True
-        servicedict['hosts'] = True
-        rundeploy = True
+    if activeservices:
+        if len(activeservices) > 1:
+            logging.error("Can only output one service at a time.")
+            sys.exit(2)
+        logging.getLogger().setLevel(logging.CRITICAL)
+        run_service(activeservices.pop(), file_hostlist, file_cnames)
 
-        # don't sync with dnsvs on dryrun
-        rundnsvs = not args.dryrun
-
-    if args.dnsvs or rundnsvs:
+    if not dryrun:
         sync_dnsvs(file_hostlist, file_cnames, args.dryrun)
-
-    run_services(args, servicedict, file_hostlist, file_cnames)
-
-    if not args.quiet:
-        subprocess.call(["git", "--no-pager", "diff", "-U0", "build"])
-
-    if rundeploy and not args.dryrun:
-        run_deploy()
 
     if not args.quiet:
         print('-' * 40)

@@ -30,7 +30,7 @@ class Inventory():
         pullresult = self.repo.remote().pull()[-1]
         if not pullresult.flags & pullresult.HEAD_UPTODATE:
             logging.error("Failed to pull hosts repo.")
-        self.hosts = hostlist.YMLHostlist()
+        self.hostlist = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()
         print("Refreshed cache.")
 
@@ -38,26 +38,26 @@ class Inventory():
     @cherrypy.tools.json_out()
     def ansible(self):
         self.fetch_hostlist()
-        return output_services.AnsibleOutput.gen_content(self.hosts, self.cnames)
+        return output_services.AnsibleOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
     def munin(self):
         self.fetch_hostlist()
-        return output_services.MuninOutput.gen_content(self.hosts, self.cnames)
+        return output_services.MuninOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
     def dhcp(self):
         self.fetch_hostlist()
-        return output_services.DhcpOutput.gen_content(self.hosts, self.cnames)
+        return output_services.DhcpOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
     def hosts(self):
         self.fetch_hostlist()
-        return output_services.HostsOutput.gen_content(self.hosts, self.cnames)
+        return output_services.HostsOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
     def status(self):
-        result = 'Have a hostlist with %s hosts and %s cnames.' % (len(self.hosts), len(self.cnames))
+        result = 'Have a hostlist with %s hosts and %s cnames.' % (len(self.hostlist), len(self.cnames))
         result += '\nLast updated: %s' % self.last_update
         return result
 

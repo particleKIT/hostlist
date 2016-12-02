@@ -196,3 +196,4 @@ class EthersOutput(OutputBase):
         out = '\n'.join(entries)
         if write:
             cls.write(out, Config["ethers"])
+        return out

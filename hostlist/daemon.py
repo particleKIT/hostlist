@@ -38,18 +38,22 @@ class Inventory():
     @cherrypy.tools.json_out()
     def ansible(self):
         self.fetch_hostlist()
-        return output_services.AnsibleOutput.gen_content(
-            self.hosts,
-            self.cnames,
-        )
+        return output_services.AnsibleOutput.gen_content(self.hosts, self.cnames)
 
     @cherrypy.expose
     def munin(self):
         self.fetch_hostlist()
-        return output_services.MuninOutput.gen_content(
-            self.hosts,
-            self.cnames,
-        )
+        return output_services.MuninOutput.gen_content(self.hosts, self.cnames)
+
+    @cherrypy.expose
+    def dhcp(self):
+        self.fetch_hostlist()
+        return output_services.DhcpOutput.gen_content(self.hosts, self.cnames)
+
+    @cherrypy.expose
+    def hosts(self):
+        self.fetch_hostlist()
+        return output_services.HostsOutput.gen_content(self.hosts, self.cnames)
 
     @cherrypy.expose
     def status(self):

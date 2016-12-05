@@ -121,7 +121,11 @@ class YMLHost(Host):
 
         if not self.vars['institute']:
             raise Exception("No institute given for %s." % self.hostname)
-        self.groups.update({hosttype, self.vars['institute'], self.vars['institute'] + hosttype})
+        self.groups.update({
+            self.vars['hosttype'],
+            self.vars['institute'],
+            self.vars['institute'] + self.vars['hosttype']
+        })
 
         self._check_vars()
         self._check_user()

@@ -14,3 +14,12 @@ hosts:
     institute: extinst
     ip: 203.0.113.2
     mac: 00:12:34:ab:CD:F2
+
+---
+header:
+  hosttype: newservertype
+hosts:
+  - hostname: serv3
+    ip: 198.51.100.101
+    needs_mac: False
+    institute: abc

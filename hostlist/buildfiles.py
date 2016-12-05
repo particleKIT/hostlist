@@ -39,6 +39,9 @@ def parse_args(services):
                         '-d',
                         action='store_true',
                         help='only parse, don\'t sync')
+    parser.add_argument('filter',
+                        nargs='*',
+                        help='''Print hosts matching a given filter. This can be hostnames or groupnames.''')
 
     for service in services:
         parser.add_argument('--' + service,
@@ -132,7 +135,7 @@ def main():
     if args.verbose >= 1:
         logging.getLogger().setLevel(logging.DEBUG)
     if args.quiet:
-        logging.getLogger().setLevel(logging.CRITICAL)
+        logging.getLogger().setLevel(logging.ERROR)
 
     if not Config.load():
         logging.error("Need %s file to run." % Config.CONFIGNAME)
@@ -144,6 +147,10 @@ def main():
     file_cnames = cnamelist.FileCNamelist()
 
     file_hostlist.check_consistency(file_cnames)
+
+    if args.filter:
+        file_hostlist.print(args.filter)
+        sys.exit(0)
 
     if activeservices:
         run_service(activeservices.pop(), file_hostlist, file_cnames)

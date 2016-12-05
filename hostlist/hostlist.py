@@ -218,6 +218,16 @@ class YMLHostlist(Hostlist):
                     str(h.ip) + ':' + port for port in h.vars['docker']['ports']
                 ]
 
+    def print(self, filter):
+        filtered = [h for h in self if h.filter(filter)]
+        for h in filtered:
+            if logging.getLogger().level == logging.DEBUG:
+                print(h.output(printgroups=True, printallvars=True))
+            elif logging.getLogger().level == logging.INFO:
+                print(h.output(delim='\t', printgroups=True))
+            else:
+                print(h.hostname)
+
     def check_iprange_overlap(self):
         "check whether any of the ipranges given in headers overlap"
 

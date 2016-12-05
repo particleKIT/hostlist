@@ -63,13 +63,27 @@ class Host:
     def __str__(self):
         return self.output(delim='\t')
 
-    def output(self, delim='\n', printmac=False):
+    def output(self,
+               delim='\n',
+               printmac=False,
+               printgroups=False,
+               printallvars=False,
+               printvars=[]):
+
         infos = [
             ("Hostname: ", self.fqdn),
             ("IP: ", str(self.ip) + " (nonunique)" if not self.vars['unique'] else self.ip),
         ]
         if printmac:
             infos.append(("MAC: ", self.mac))
+
+        if printallvars:
+            printvars = self.vars.keys()
+        for var in printvars:
+            infos.append((var + ': ', self.vars.get(var)))
+
+        if printgroups:
+            infos.append(('Groups: ', ', '.join(self.groups)))
 
         out = []
         for a, b in infos:
@@ -180,6 +194,10 @@ class YMLHost(Host):
         if self.ip < iprange[0] or self.ip > iprange[1]:
             raise Exception("%s has IP %s outside of range %s-%s." %
                             (self.fqdn, self.ip, iprange[0], iprange[1]))
+
+    def filter(self, filter):
+        assert filter.__class__ == list
+        return self.hostname in filter or any([g in filter for g in self.groups])
 
 
 class MAC(str):

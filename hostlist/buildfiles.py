@@ -112,7 +112,7 @@ def run_service(service, file_hostlist, file_cnames):
 def main():
     "main routine"
 
-    if not Config.loaded:
+    if not Config.load():
         logging.error("Need %s file to run." % Config.CONFIGNAME)
         sys.exit(1)
 

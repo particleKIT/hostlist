@@ -89,9 +89,13 @@ def _auth_config(app):
     if app.config.get('/', {}).get('tools.auth_digest.on', False):
         auth = app.config['authentication']
         users = {auth['user']: auth['password']}
-        # def check_pass(realm, user, password):
-        #     return user == auth['user'] and password == auth['password']
         app.config['/'].update({'tools.auth_digest.get_ha1': cherrypy.lib.auth_digest.get_ha1_dict_plain(users)})
+    elif app.config.get('/', {}).get('tools.auth_basic.on', False):
+        auth = app.config['authentication']
+        users = {auth['user']: auth['password']}
+        def check_pass(realm, user, password):
+            return user == auth['user'] and password == auth['password']
+        app.config['/'].update({'tools.auth_basic.checkpassword': check_pass})
 
 
 def main():

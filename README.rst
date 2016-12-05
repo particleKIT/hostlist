@@ -36,7 +36,13 @@ Web daemon
 ----------
 
 You can start `hostlist-daemon` to serve the generated content via http. Start `hostlist-daemon` where you would run `buildfiles`.
-The daemon is based on cherrypy and has a config file daemon.conf. A working example can be found in `tests`.
+The daemon is based on cherrypy and has a config file daemon.conf. 
+
+
+Example
+-------
+
+A working example for inputs and all configuratino files can be found in `tests`.
 
 DNSVS Synchronization
 ---------------------
@@ -46,7 +52,7 @@ DNSVS, which is the dns management system used by https://www.scc.kit.edu.
 
 Tests
 -----
-To run the unit tests:
+To run the tests:
 ::
 
   cd tests; py.test

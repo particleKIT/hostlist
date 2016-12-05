@@ -1,13 +1,20 @@
 # Change Log
 
-## 1.1.0 - unrelease
+## 1.1.0 - unreleased
 
 ### Added
 * daemon (hostlist-daemon)
-  * distribute inventories (esp. ansible/munin) via http
+  * distribute inventories via http(s)
   * Dockerfile to run the daemon
+  * pulls repo updates and caches result
+  * http basic/digest authentication
+* allow to set groups (via variable `groups` as a list of strings)
+* more tests, work with py.test
 
 ### Changed
+* remove deploy code
+* remove `build` directory, copying files replaced by http daemon
+* remove flag `--stdout`, this is now default when running buildfiles with a service argument
 * no explicit checks during DNSVS sync, rely on internal consistency checks
 
 ### Fixed

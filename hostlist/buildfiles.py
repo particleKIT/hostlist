@@ -130,6 +130,7 @@ def main():
             logging.error("Can only output one service at a time.")
             sys.exit(2)
         args.quiet = True
+        args.dryrun = True
 
     logging.getLogger().setLevel(logging.INFO)
     if args.verbose >= 1:

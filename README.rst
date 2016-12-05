@@ -35,8 +35,8 @@ At the moment the supported services are:
 Web daemon
 ----------
 
-You can start `hostlist-daemon` to serve the generated content via http. Start `hostlist-daemon` where you would run `buildfiles`
-and 
+You can start `hostlist-daemon` to serve the generated content via http. Start `hostlist-daemon` where you would run `buildfiles`.
+The daemon is based on cherrypy and has a config file daemon.conf. A working example can be found in `tests`.
 
 DNSVS Synchronization
 ---------------------
@@ -49,7 +49,7 @@ Tests
 To run the unit tests:
 ::
 
-  nosetest tests
+  cd tests; py.test
 
 Contribute
 ----------

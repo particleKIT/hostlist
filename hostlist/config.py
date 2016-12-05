@@ -8,10 +8,8 @@ class Config(dict):
     "provides access to config settings"
     CONFIGNAME = "config.yml"
 
-
     def __init__(self):
         self._loaded = False
-        pass
 
     def __getitem__(self, *args):
         if not self._loaded:

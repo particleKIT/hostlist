@@ -112,10 +112,6 @@ def run_service(service, file_hostlist, file_cnames):
 def main():
     "main routine"
 
-    if not Config.load():
-        logging.error("Need %s file to run." % Config.CONFIGNAME)
-        sys.exit(1)
-
     logging.basicConfig(format='%(levelname)s:%(message)s')
 
     services = ['dhcp', 'dhcpinternal', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']
@@ -137,6 +133,10 @@ def main():
         logging.getLogger().setLevel(logging.DEBUG)
     if args.quiet:
         logging.getLogger().setLevel(logging.CRITICAL)
+
+    if not Config.load():
+        logging.error("Need %s file to run." % Config.CONFIGNAME)
+        sys.exit(1)
 
     logging.info("loading hostlist from yml files")
     file_hostlist = hostlist.YMLHostlist()

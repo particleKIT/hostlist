@@ -93,6 +93,7 @@ def _auth_config(app):
     elif app.config.get('/', {}).get('tools.auth_basic.on', False):
         auth = app.config['authentication']
         users = {auth['user']: auth['password']}
+
         def check_pass(realm, user, password):
             return user == auth['user'] and password == auth['password']
         app.config['/'].update({'tools.auth_basic.checkpassword': check_pass})

@@ -167,8 +167,10 @@ class EthersOutput:
     @classmethod
     def gen_content(cls, hostlist, cnames):
         entries = (
-            "%s %s" % (host.mac, host.fqdn) for host in hostlist
-            if host.mac
+            "%s %s" % (h.mac, alias)
+            for h in hostlist
+            for alias in h.aliases
+            if h.mac
         )
         out = '\n'.join(entries)
         return out

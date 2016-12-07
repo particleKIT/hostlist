@@ -50,9 +50,11 @@ Many checks are performed to ensure consistency and find mistakes before they
 are deployed:
 
 * IP range
+
   * hosts must have an IP in the given range
   * all hosts must fall into the IP ranges stated in the config
   * ipranges between files must not overlap (except iprange_allow_overlap is set)
+  
 * IP, MAC and hostname must be unique
 * if `user` is set, it must be an existing user account (to detect machines
   belonging to users who no longer have an account)

@@ -129,10 +129,10 @@ class Hostlist(list):
         inverseotherhostlist = {h.fqdn: h for h in otherhostlist}
 
         for fqdn, ip in hostnames.items():
-            if otherhostnames.get(fqdn, None) != ip:
+            if otherhostnames.get(fqdn) != ip:
                 diff.add.append(inversehostlist[fqdn])
         for fqdn, ip in otherhostnames.items():
-            if hostnames.get(fqdn, None) != ip:
+            if hostnames.get(fqdn) != ip:
                 diff.remove.append(inverseotherhostlist[fqdn])
 
         diff.empty = (not diff.add) and (not diff.remove)

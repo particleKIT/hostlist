@@ -20,8 +20,7 @@ def yes_no_query(question, empty_means=None):
     sys.stdout.write('%s %s' % (question, choices))
     while True:
         inp = input()
-        if inp.strip() == '':
-            if empty_means is not None:
+        if inp.strip() == '' and empty_means is not None:
                 return empty_means
         else:
             try:

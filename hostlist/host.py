@@ -133,9 +133,8 @@ class YMLHost(Host):
 
         self._set_fqdn()
         self._set_publicip()
-        if header:
-            if 'iprange' in header:
-                self._check_iprange(header['iprange'])
+        if header and 'iprange' in header:
+            self._check_iprange(header['iprange'])
         self.header = header
         logging.debug("Added " + str(self))
 

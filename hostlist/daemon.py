@@ -49,14 +49,9 @@ class Inventory():
         return output_services.MuninOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
-    def dhcpinternal(self):
-        self.fetch_hostlist()
-        return output_services.DhcpOutput.gen_content(self.hostlist, self.cnames, external=False)
-
-    @cherrypy.expose
     def dhcp(self):
         self.fetch_hostlist()
-        return output_services.DhcpOutput.gen_content(self.hostlist, self.cnames, external=True)
+        return output_services.DhcpOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
     def hosts(self):

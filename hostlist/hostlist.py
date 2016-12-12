@@ -32,6 +32,7 @@ class Hostlist(list):
             self.check_cnames(cnames),
             self.check_duplicates(),
             self.check_missing_mac_ip(),
+            all(h.run_checks() for h in self),
         ]
 
         if isinstance(self, YMLHostlist):

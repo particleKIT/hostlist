@@ -141,9 +141,7 @@ class YMLHost(Host):
             self.vars['institute'] + self.vars['hosttype']
         })
 
-        self._check_vars()
-        self._check_user()
-        self._check_end_date()
+        self._check_macip()
 
         self._set_fqdn()
         self._set_publicip()
@@ -152,25 +150,7 @@ class YMLHost(Host):
         self.header = header
         logging.debug("Added " + str(self))
 
-    def _check_end_date(self):
-        "Check that end_date is not over yet"
-        if 'end_date' in self.vars:
-            end_date = self.vars['end_date']
-            if not isinstance(end_date, datetime.date):
-                logging.error("Parsing of end_date %s led to non-date datatype %s for host %s." % (end_date, end_date.__class__, self.hostname))
-                return
-            if end_date < datetime.date.today():
-                logging.error("Host end_date in the past for host %s." % self.hostname)
-
-    def _check_user(self):
-        "Check that user (still) exists if set"
-        if 'user' in self.vars:
-            try:
-                subprocess.check_output(['id', self.vars['user']])
-            except subprocess.CalledProcessError:
-                logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.hostname))
-
-    def _check_vars(self):
+    def _check_macip(self):
         "Check validity of vars set for host."
         try:
             assert self.IPREGEXP.match(self.vars['ip'])
@@ -193,6 +173,35 @@ class YMLHost(Host):
         if self.ip < iprange[0] or self.ip > iprange[1]:
             raise Exception("%s has IP %s outside of range %s-%s." %
                             (self.fqdn, self.ip, iprange[0], iprange[1]))
+
+    def run_checks(self):
+        checks = [
+            self._check_user(),
+            self._check_end_date(),
+        ]
+        return all(checks)
+
+    def _check_end_date(self):
+        "Check that end_date is not over yet"
+        if 'end_date' in self.vars:
+            end_date = self.vars['end_date']
+            if not isinstance(end_date, datetime.date):
+                logging.error("Parsing of end_date %s led to non-date datatype %s for host %s." % (end_date, end_date.__class__, self.hostname))
+                return False
+            if end_date < datetime.date.today():
+                logging.error("Host end_date in the past for host %s." % self.hostname)
+                return False
+        return True
+
+    def _check_user(self):
+        "Check that user (still) exists if set"
+        if 'user' in self.vars:
+            try:
+                subprocess.check_output(['id', self.vars['user']])
+            except subprocess.CalledProcessError:
+                logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.hostname))
+                return False
+        return True
 
     def filter(self, filter):
         assert filter.__class__ == list

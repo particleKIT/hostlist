@@ -146,8 +146,6 @@ def main():
     logging.info("loading cnames from file")
     file_cnames = cnamelist.FileCNamelist()
 
-    file_hostlist.check_consistency(file_cnames)
-
     if args.filter:
         file_hostlist.print(args.filter)
         sys.exit(0)

@@ -2,6 +2,8 @@
 
 from collections import defaultdict
 
+from .config import CONFIGINSTANCE as Config
+
 
 class Ssh_Known_HostsOutput:
     "Generate hostlist for ssh-keyscan"
@@ -143,7 +145,7 @@ class AnsibleOutput:
         if host.ip:
             result['vars']['ip'] = str(host.ip)
 
-        ansiblevars = ['subnet', 'institute', 'hosttype', 'docker']
+        ansiblevars = Config.get('ansiblevars', []) + ['hosttype', 'institute', 'docker']
         for avar in ansiblevars:
             if avar in host.vars:
                 result['vars'][avar] = host.vars[avar]

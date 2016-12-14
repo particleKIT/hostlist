@@ -79,7 +79,7 @@ class Host:
 
         if printallvars:
             printvars = self.vars.keys()
-        for var in printvars:
+        for var in sorted(printvars):
             infos.append((var + ': ', self.vars.get(var)))
 
         if printgroups:

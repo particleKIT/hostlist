@@ -41,7 +41,7 @@ class MuninOutput:
 
     @classmethod
     def gen_content(cls, hostlist, cnames):
-        hostnames = (h for h in hostlist if h.vars.get('gen_munin', False) and h.publicip)
+        hostnames = (h for h in hostlist if h.vars.get('gen_munin', False))
         fcont = ''
         for host in hostnames:
             fcont += cls._get_hostblock(host)

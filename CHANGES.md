@@ -1,6 +1,18 @@
 # Change Log
 
-## 1.1.0 - unreleased
+
+## 1.2.0
+
+### Added
+* output information about hosts, when given as arguments to buildfiles
+  * can give hostname or group as argument
+  * multiple arguments are allowed (combined via or)
+  * output verbosity can change from
+    * `-q`: only list of hostnames
+    * default: hostnames and groups
+    * `-v`: all information on hosts including all variables
+
+## 1.1.0
 
 ### Added
 * daemon (hostlist-daemon)

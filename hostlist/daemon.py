@@ -67,6 +67,11 @@ class Inventory():
         return output_services.EthersOutput.gen_content(self.hostlist, self.cnames)
 
     @cherrypy.expose
+    def list(self):
+        self.fetch_hostlist()
+        return output_services.WebOutput.gen_content(self.hostlist, self.cnames)
+
+    @cherrypy.expose
     def status(self):
         result = 'Have a hostlist with %s hosts and %s cnames.' % (len(self.hostlist), len(self.cnames))
         result += '\nLast updated: %s' % self.last_update

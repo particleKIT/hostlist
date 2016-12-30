@@ -117,7 +117,8 @@ def main():
 
     logging.basicConfig(format='%(levelname)s:%(message)s')
 
-    services = ['dhcp', 'dhcpinternal', 'hosts', 'munin', 'ssh_known_hosts', 'ansible', 'ethers']
+    services = ['dhcp', 'dhcpinternal', 'hosts', 'munin',
+                'ssh_known_hosts', 'ansible', 'ethers', 'web']
     args = parse_args(services)
 
     # get a dict of the arguments

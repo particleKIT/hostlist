@@ -30,8 +30,11 @@ class Inventory():
             return
         self.last_update = datetime.datetime.now()
 
-        pullresult = self.repo.remote().pull()[-1]
-        if not pullresult.flags & pullresult.HEAD_UPTODATE:
+        try:
+            pullresult = self.repo.remote().pull()[-1]
+            if not pullresult.flags & pullresult.HEAD_UPTODATE:
+                logging.error("Hosts repo not up to date after pull.")
+        except:
             logging.error("Failed to pull hosts repo.")
         self.hostlist = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()

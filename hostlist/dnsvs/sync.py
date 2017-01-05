@@ -3,6 +3,8 @@
 import logging
 
 from . import dnsvs_webapi as dnsvs
+from ..cnamelist import CName
+from ..host import Host
 
 # use termcolor when available, otherwise ignore
 try:
@@ -14,10 +16,16 @@ except ImportError:
 
 def apply_diff(diff):
     con = dnsvs.dnsvs_interface()
-    for entry in diff.remove:
+    removelist = \
+        list(filter(lambda h: isinstance(h, CName), diff.remove)) + \
+        list(filter(lambda h: isinstance(h, Host), diff.remove))
+    addlist = \
+        list(filter(lambda h: isinstance(h, Host), diff.add)) + \
+        list(filter(lambda h: isinstance(h, CName), diff.add))
+    for entry in removelist:
         logging.info('removing\t' + str(entry))
         con.remove(entry)
-    for entry in diff.add:
+    for entry in addlist:
         logging.info('adding\t' + str(entry))
         con.add(entry)
 

@@ -57,6 +57,9 @@ class Host:
         domain = "%s.%s" % (institute, Config["domain"])
         return domain
 
+    def run_checks(self):
+        return True
+
     def __repr__(self):
         return self.output(delim=' ')
 

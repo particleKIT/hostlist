@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 
 import logging
-import types
+from types import SimpleNamespace
+from typing import Dict
+
 from .config import CONFIGINSTANCE as Config
 
 
 class CNamelist(list):
     "Representation of the list of CNames"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '\n'.join([str(h) for h in self])
 
-    def diff(self, othercnames):
-        diff = types.SimpleNamespace()
+    def diff(self, othercnames: list) -> SimpleNamespace:
+        diff = SimpleNamespace()
         diff.add, diff.remove = [], []
 
         fqdns = {h.fqdn: h for h in self}
@@ -32,7 +34,7 @@ class CNamelist(list):
 class FileCNamelist(CNamelist):
     "File based CNamelist"
 
-    def __init__(self):
+    def __init__(self) -> None:
         source = 'cnames'  # TODO: move to config
         fname = Config["hostlistdir"] + source
         try:
@@ -53,34 +55,30 @@ class FileCNamelist(CNamelist):
             except Exception as e:
                 logging.error("Failed to parse host (%s) in %s." %
                               (line.strip(), infile.name))
-                logging.error(e)
+                logging.error(str(e))
                 raise
 
 
 class DNSVSCNamelist(CNamelist):
     "DNSVS based CNamelist"
 
-    def __init__(self, con):
+    def __init__(self, cnames: Dict[str, str]) -> None:
         "expects a dnsvs interface passed as con"
-        cnames = con.get_cnames()
         for fqdn, dest in cnames.items():
             self.append(CName(fqdn, dest))
 
 
 class CName:
-    def __init__(self, fqdn, dest):
-        if not fqdn or not dest:
-            raise Exception("wrong initialization of CName, "
-                            "need both fqdn and dest")
+    def __init__(self, fqdn: str, dest: str) -> None:
         self.fqdn = fqdn
         self.dest = dest
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return 'CNAME: %s -> %s' % (self.fqdn, self.dest)
 
 
 class CNameConfline(CName):
-    def __init__(self, line):
+    def __init__(self, line: str) -> None:
         assert line.startswith('cname=')
         rhs = line.split('=')[1]
         hostnames = rhs.split(',')

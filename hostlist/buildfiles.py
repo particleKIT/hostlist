@@ -7,6 +7,7 @@ import types
 from distutils.util import strtobool
 import sys
 import json
+from typing import List
 
 from . import hostlist
 from . import cnamelist
@@ -14,13 +15,13 @@ from . import output_services
 from .config import CONFIGINSTANCE as Config
 try:
     from .dnsvs import sync
-    from .dnsvs import dnsvs_webapi as dnsvs
+    from .dnsvs import DNSVSInterface
     HAS_DNSVS = True
 except ImportError:
     HAS_DNSVS = False
 
 
-def parse_args(services):
+def parse_args(services: List[str]) -> argparse.Namespace:
     "setup parser for script arguments"
     parser = argparse.ArgumentParser(
         description='create all configuration files based on host input',
@@ -69,11 +70,13 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
         logging.error("Import of DNSVS failed. Are all requirements installed?")
         return
     try:
-        con = dnsvs.dnsvs_interface()
+        con = DNSVSInterface()
         logging.info("loading hostlist from dnsvs")
-        dnsvs_hostlist = hostlist.DNSVSHostlist(con)
+        hostinput = con.get_hosts()
+        dnsvs_hostlist = hostlist.DNSVSHostlist(hostinput)
         logging.info("loading cnames from dnsvs")
-        dnsvs_cnames = cnamelist.DNSVSCNamelist(con)
+        cnameinput = con.get_cnames()
+        dnsvs_cnames = cnamelist.DNSVSCNamelist(cnameinput)
     except Exception as exc:
         logging.error(exc)
         logging.error("Failed to connect to DNSVS."
@@ -98,7 +101,7 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
                 sync.apply_diff(total_diff)
 
 
-def run_service(service, file_hostlist, file_cnames):
+def run_service(service: str, file_hostlist: hostlist.Hostlist, file_cnames: cnamelist.CNamelist) -> None:
     "Run all services according to servicedict on hosts in file_hostlist."
     outputcls = getattr(output_services, service.title() + "Output", None)
     if outputcls:

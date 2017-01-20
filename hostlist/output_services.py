@@ -179,7 +179,7 @@ class WebOutput:
         else:
             header = '<html><body>'
 
-        fields = ['hosttype', 'hostname', 'user', 'room', 'date_bought', 'hardware', 'memory', 'comment']
+        fields = Config.get('weboutput_columns', ['institute', 'hosttype', 'hostname'])
         thead = '<table><thead><tr><th>' + '</th><th>'.join(fields) + '</th></tr></thead>\n'
         footer = '</table></body></html>'
         hostlist = '\n'.join(

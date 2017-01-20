@@ -147,7 +147,6 @@ def main():
 
     file_hostlist.check_consistency(file_cnames)
 
-
     if args.filter:
         file_hostlist.print(args.filter)
         sys.exit(0)

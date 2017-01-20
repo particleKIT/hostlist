@@ -81,8 +81,6 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
                       " cf. Readme.md.")
         logging.error("Not syncing with DNSVS.")
     else:
-        dnsvs_hostlist.check_consistency(dnsvs_cnames)
-
         dnsvs_diff = file_hostlist.diff(dnsvs_hostlist)
         dnsvs_cnames_diff = file_cnames.diff(dnsvs_cnames)
         total_diff = combine_diffs(dnsvs_diff, dnsvs_cnames_diff)
@@ -146,6 +144,9 @@ def main():
     file_hostlist = hostlist.YMLHostlist()
     logging.info("loading cnames from file")
     file_cnames = cnamelist.FileCNamelist()
+
+    file_hostlist.check_consistency(file_cnames)
+
 
     if args.filter:
         file_hostlist.print(args.filter)

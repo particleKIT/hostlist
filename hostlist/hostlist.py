@@ -26,100 +26,6 @@ class Hostlist(list):
     def __str__(self):
         return '\n'.join([str(h) for h in self])
 
-    def check_consistency(self, cnames):
-        checks = [
-            self.check_nonunique(),
-            self.check_cnames(cnames),
-            self.check_duplicates(),
-            self.check_missing_mac_ip(),
-            all(h.run_checks() for h in self),
-        ]
-
-        if isinstance(self, YMLHostlist):
-            checks.append(self.check_iprange_overlap())
-
-        logging.info("consistency check finished")
-        if not all(checks):
-            sys.exit(1)
-
-    def check_nonunique(self):
-        """ensure nonunique flag agrees with nonunique_ips config"""
-        success = True
-        nonunique_ips = defaultdict(list)
-        for h in self:
-            ip_fit = str(h.ip) in Config["nonunique_ips"]
-            if ip_fit and h.vars['unique']:
-                nonunique_ips[str(h.ip)].append(h)
-            if not ip_fit and not h.vars['unique']:
-                logging.error("Host %s has nonunique ip flag, "
-                              "but its ip is not listed in the config." % h)
-                success = False
-
-        for ip in nonunique_ips:
-            if len(nonunique_ips[ip]) > 1:
-                logging.error("More than one host uses a given nonunique ip"
-                              " without being flagged:\n" +
-                              ('\n'.join((str(x) for x in nonunique_ips[ip]))))
-                success = False
-
-        return success
-
-    def check_cnames(self, cnames):
-        """ensure there are no duplicates between hostlist and cnames"""
-        success = True
-        for cname in cnames:
-            has_dest = False
-            for h in self:
-                if h.fqdn == cname.fqdn:
-                    logging.error("%s conflicts with %s." % (cname, h))
-                    success = False
-                if cname.dest == h.fqdn:
-                    has_dest = True
-            if not has_dest:
-                logging.error("%s points to a non-existing host." % cname)
-                success = False
-        return success
-
-    def check_duplicates(self):
-        """check consistency of hostlist
-
-        detect duplicates (ip, mac, hostname)"""
-
-        success = True
-        inverselist = {}
-        tocheck_props = ['ip', 'mac', 'hostname']
-        for prop in tocheck_props:
-            inverselist[prop] = {}
-            for h in self:
-                myhostprop = getattr(h, prop)
-                if myhostprop is None:
-                    continue
-                if prop == 'ip' and str(myhostprop) in Config["nonunique_ips"]:
-                    # allow nonunique ips if listed in config
-                    continue
-                if myhostprop in inverselist[prop]:
-                    logging.error("Found duplicate %s for hosts \n%s\n%s"
-                                  % (prop, inverselist[prop][myhostprop], h))
-                    success = False
-                inverselist[prop][myhostprop] = h
-        return success
-
-    def check_missing_mac_ip(self):
-        """check if hosts are missing an ip or mac"""
-
-        success = True
-        for h in self:
-            if 'needs_ip' in h.vars and h.vars['needs_ip'] and h.ip is None:
-                logging.error("Missing IP in %s " % h)
-                success = False
-
-        if isinstance(self, YMLHostlist):
-            for h in self:
-                if h.vars['needs_mac'] and h.mac is None:
-                    logging.error("Missing MAC in %s " % h)
-                    success = False
-        return success
-
     def diff(self, otherhostlist):
         diff = types.SimpleNamespace()
         diff.add, diff.remove = [], []
@@ -228,6 +134,98 @@ class YMLHostlist(Hostlist):
                 print(h.output(delim='\t', printgroups=True))
             else:
                 print(h.hostname)
+
+    def check_consistency(self, cnames):
+        checks = [
+            self.check_nonunique(),
+            self.check_cnames(cnames),
+            self.check_duplicates(),
+            self.check_missing_mac_ip(),
+            self.check_iprange_overlap(),
+            all(h.run_checks() for h in self),
+        ]
+
+        logging.info("consistency check finished")
+        if not all(checks):
+            sys.exit(1)
+
+    def check_nonunique(self):
+        """ensure nonunique flag agrees with nonunique_ips config"""
+        success = True
+        nonunique_ips = defaultdict(list)
+        for h in self:
+            ip_fit = str(h.ip) in Config["nonunique_ips"]
+            if ip_fit and h.vars['unique']:
+                nonunique_ips[str(h.ip)].append(h)
+            if not ip_fit and not h.vars['unique']:
+                logging.error("Host %s has nonunique ip flag, "
+                              "but its ip is not listed in the config." % h)
+                success = False
+
+        for ip in nonunique_ips:
+            if len(nonunique_ips[ip]) > 1:
+                logging.error("More than one host uses a given nonunique ip"
+                              " without being flagged:\n" +
+                              ('\n'.join((str(x) for x in nonunique_ips[ip]))))
+                success = False
+
+        return success
+
+    def check_cnames(self, cnames):
+        """ensure there are no duplicates between hostlist and cnames"""
+        success = True
+        for cname in cnames:
+            has_dest = False
+            for h in self:
+                if h.fqdn == cname.fqdn:
+                    logging.error("%s conflicts with %s." % (cname, h))
+                    success = False
+                if cname.dest == h.fqdn:
+                    has_dest = True
+            if not has_dest:
+                logging.error("%s points to a non-existing host." % cname)
+                success = False
+        return success
+
+    def check_duplicates(self):
+        """check consistency of hostlist
+
+        detect duplicates (ip, mac, hostname)"""
+
+        success = True
+        inverselist = {}
+        tocheck_props = ['ip', 'mac', 'hostname']
+        for prop in tocheck_props:
+            inverselist[prop] = {}
+            for h in self:
+                myhostprop = getattr(h, prop)
+                if myhostprop is None:
+                    continue
+                if prop == 'ip' and str(myhostprop) in Config["nonunique_ips"]:
+                    # allow nonunique ips if listed in config
+                    continue
+                if myhostprop in inverselist[prop]:
+                    logging.error("Found duplicate %s for hosts \n%s\n%s"
+                                  % (prop, inverselist[prop][myhostprop], h))
+                    success = False
+                inverselist[prop][myhostprop] = h
+        return success
+
+    def check_missing_mac_ip(self):
+        """check if hosts are missing an ip or mac"""
+
+        success = True
+        for h in self:
+            if 'needs_ip' in h.vars and h.vars['needs_ip'] and h.ip is None:
+                logging.error("Missing IP in %s " % h)
+                success = False
+
+        if isinstance(self, YMLHostlist):
+            for h in self:
+                if h.vars['needs_mac'] and h.mac is None:
+                    logging.error("Missing MAC in %s " % h)
+                    success = False
+        return success
 
     def check_iprange_overlap(self):
         "check whether any of the ipranges given in headers overlap"

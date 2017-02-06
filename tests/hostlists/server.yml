@@ -9,7 +9,8 @@ hosts:
     institute: blubberinst
     groups:
       - superserver
-    needs_mac: False
+    not_groups:
+      - needs_mac
   - hostname: serv2.abc.example.com
     institute: extinst
     ip: 203.0.113.2
@@ -21,5 +22,6 @@ header:
 hosts:
   - hostname: serv3
     ip: 198.51.100.101
-    needs_mac: False
+    not_groups:
+      - needs_mac
     institute: abc

@@ -216,14 +216,14 @@ class YMLHostlist(Hostlist):
 
         success = True
         for h in self:
-            if 'needs_ip' in h.vars and h.vars['needs_ip'] and h.ip is None:
-                logging.error("Missing IP in %s " % h)
+            if ('needs_ip' in h.groups or ('needs_ip' in h.vars and h.vars['needs_ip'])) and h.ip is None:
+                logging.error("Missing IP in %s ", h)
                 success = False
 
         if isinstance(self, YMLHostlist):
             for h in self:
-                if h.vars['needs_mac'] and h.mac is None:
-                    logging.error("Missing MAC in %s " % h)
+                if ('needs_mac' in h.groups or ('needs_mac' in h.vars and h.vars['needs_mac'])) and h.mac is None:
+                    logging.error("Missing MAC in %s ", h)
                     success = False
         return success
 

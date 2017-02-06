@@ -3,6 +3,9 @@
 from collections import defaultdict
 import os
 
+from .host import Host
+from .hostlist import Hostlist
+from .cnamelist import CNamelist
 from .config import CONFIGINSTANCE as Config
 
 
@@ -10,7 +13,7 @@ class Ssh_Known_HostsOutput:
     "Generate hostlist for ssh-keyscan"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         # only scan keys on hosts that are in ansible
         scan_hosts = [
             h for h in hostlist
@@ -35,7 +38,7 @@ class HostsOutput:
     "Config output for /etc/hosts format"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         hoststrings = (str(h.ip) + " " + " ".join(h.aliases) for h in hostlist if h.ip)
         content = '\n'.join(hoststrings)
         return content
@@ -45,7 +48,7 @@ class MuninOutput:
     "Config output for Munin"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         hostnames = (
             h for h in hostlist
             if h.vars.get('gen_munin', False) or
@@ -57,15 +60,14 @@ class MuninOutput:
         return fcont
 
     @staticmethod
-    def _get_hostblock(host):
+    def _get_hostblock(host: Host) -> str:
         cont = '[{institute}{hosttype};{h}]\naddress {h}\n'.format(
             h=host.fqdn,
             institute=host.vars['institute'],
             hosttype=host.vars['hosttype'],
         )
-        if 'munin' in host.vars:
-            for line in host.vars['munin']:
-                cont += line + '\n'
+        for line in host.vars.get('munin', []):
+            cont += line + '\n'
         return cont
 
 
@@ -73,7 +75,7 @@ class DhcpOutput:
     "DHCP config output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         out = ""
         for host in hostlist:
             entry = cls._gen_hostline(host)
@@ -83,7 +85,7 @@ class DhcpOutput:
         return out
 
     @staticmethod
-    def _gen_hostline(host):
+    def _gen_hostline(host: Host) -> str:
         if host.mac and host.ip:
             # curly brackets doubled for python format function
             return """host {fqdn} {{
@@ -98,7 +100,7 @@ class AnsibleOutput:
     "Ansible inventory output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> dict:
         """generate json inventory for ansible
         form:
             {
@@ -118,7 +120,8 @@ class AnsibleOutput:
             ...
 
         """
-        resultdict = defaultdict(lambda: {'hosts': []})
+        resultdict = defaultdict(lambda: {'hosts': []})  # type: dict
+        #  with python>=3.6 # type: defaultdict[str, Any]
         hostvars = {}
         docker_services = {}
         for host in hostlist:
@@ -165,7 +168,7 @@ class EthersOutput:
     "/etc/ethers format output"
 
     @classmethod
-    def gen_content(cls, hostlist, cnames):
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         entries = (
             "%s %s" % (h.mac, alias)
             for h in hostlist

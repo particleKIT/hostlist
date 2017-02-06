@@ -5,6 +5,7 @@ import logging
 import subprocess
 import datetime
 import re
+from typing import Optional, List, Iterable
 
 from .config import CONFIGINSTANCE as Config
 
@@ -14,7 +15,7 @@ class Host:
     Representation of one host with several properties
     """
 
-    def __init__(self, hostname, ip, is_nonunique=False):
+    def __init__(self, hostname: str, ip: str, is_nonunique: bool=False) -> None:
         self._set_defaults()
         self.ip = ipaddress.ip_address(ip)
         self.hostname = hostname
@@ -25,24 +26,25 @@ class Host:
     def _set_defaults(self):
         self.vars = {
             'unique': True,
-        }
+        }  # type: Dict[str, Any]
 
-        self.ip = None
+        self.ip = None  # type: Optional[ipaddress.ip_address]
         self.mac = None
-        self.hostname = ""
-        self.publicip = True
+        self.hostname = ""  # type: str
+        self.publicip = True  # type: bool
         self.header = None  # stores header of input file
+        self.groups = set(Config.get('groups', []))  # type: set
 
     def _set_fqdn(self):
         if self.hostname.endswith(Config["domain"]):
             dot_parts = self.hostname.split('.')
-            self.prefix = dot_parts[0]
-            self.domain = '.'.join(dot_parts[1:])
-            self.fqdn = self.hostname
+            self.prefix = dot_parts[0]  # type: str
+            self.domain = '.'.join(dot_parts[1:])  # type: str
+            self.fqdn = self.hostname  # type: str
         else:
-            self.prefix = self.hostname
-            self.domain = self.get_domain(self.vars['institute'])
-            self.fqdn = self.hostname + '.' + self.domain
+            self.prefix = self.hostname  # type: str
+            self.domain = self.get_domain(self.vars['institute'])  # type: str
+            self.fqdn = self.hostname + '.' + self.domain  # type: str
 
     def _set_publicip(self):
         if not self.ip or self.ip in ipaddress.ip_network(Config["iprange"]["internal"]):
@@ -55,18 +57,18 @@ class Host:
         domain = "%s.%s" % (institute, Config["domain"])
         return domain
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.output(delim=' ')
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.output(delim='\t')
 
     def output(self,
-               delim='\n',
-               printmac=False,
-               printgroups=False,
-               printallvars=False,
-               printvars=[]):
+               delim: str='\n',
+               printmac: bool=False,
+               printgroups: bool=False,
+               printallvars: bool=False,
+               printvars: Iterable=[]) -> str:
 
         infos = [
             ("Hostname: ", self.fqdn),
@@ -83,7 +85,7 @@ class Host:
         if printgroups:
             infos.append(('Groups: ', ', '.join(self.groups)))
 
-        out = []
+        out = []  # type: list
         for a, b in infos:
             if b:
                 out += [a + str(b)]
@@ -92,7 +94,7 @@ class Host:
         return delim.join(out)
 
     @property
-    def aliases(self):
+    def aliases(self) -> List[str]:
         "Generate hostname aliases for DNS"
         if self.prefix.startswith(self.vars['institute']):
             return [self.fqdn, self.prefix, self.prefix[len(self.vars['institute']):]]
@@ -107,7 +109,12 @@ class YMLHost(Host):
     IPREGEXP = re.compile(r'^(' + _num + r'\.){3}(' + _num + ')$')
     MACREGEXP = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
 
-    def __init__(self, inputdata, hosttype, institute, header=None):
+    def __init__(self,
+                 inputdata: dict,
+                 hosttype: str,
+                 institute: str,
+                 header: Optional[dict]=None
+                 ) -> None:
         """
         parses a config file line of the form
         #host=host1.abc.kit.edu        hwadress=00:12:34:ab:cd:ef      ipadress=127.0.0.1
@@ -115,7 +122,6 @@ class YMLHost(Host):
         self._set_defaults()
         self.vars['hosttype'] = hosttype
         self.vars['institute'] = institute
-        self.groups = set(Config.get('groups', []))
 
         if header:
             for var, value in header.items():
@@ -149,7 +155,7 @@ class YMLHost(Host):
         self.header = header
         logging.debug("Added " + str(self))
 
-    def _check_macip(self):
+    def _check_macip(self) -> None:
         "Check validity of vars set for host."
         try:
             assert self.IPREGEXP.match(self.vars['ip'])
@@ -173,7 +179,7 @@ class YMLHost(Host):
             raise Exception("%s has IP %s outside of range %s-%s." %
                             (self.fqdn, self.ip, iprange[0], iprange[1]))
 
-    def run_checks(self):
+    def run_checks(self) -> bool:
         checks = [
             self._check_user(),
             self._check_end_date(),
@@ -192,7 +198,7 @@ class YMLHost(Host):
                 return False
         return True
 
-    def _check_user(self):
+    def _check_user(self) -> bool:
         "Check that user (still) exists if set"
         if 'user' in self.vars:
             try:
@@ -213,4 +219,4 @@ class MAC(str):
     Based on string, but always lowercase and replacing '-' with ':'.
     """
     def __new__(cls, value):
-        return str.__new__(cls, value.lower().replace('-', ':'))
+        return super().__new__(cls, value.lower().replace('-', ':'))

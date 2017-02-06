@@ -9,6 +9,7 @@ import ipaddress
 import itertools
 import glob
 import yaml
+from typing import Dict, Tuple
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
@@ -22,11 +23,12 @@ class Hostlist(list):
 
     def __init__(self):
         super().__init__()
+        self.fileheaders = {}
 
     def __str__(self):
         return '\n'.join([str(h) for h in self])
 
-    def diff(self, otherhostlist):
+    def diff(self, otherhostlist) -> types.SimpleNamespace:
         diff = types.SimpleNamespace()
         diff.add, diff.remove = [], []
         hostnames = {h.fqdn: h.ip for h in self if h.publicip}
@@ -49,10 +51,9 @@ class Hostlist(list):
 class DNSVSHostlist(Hostlist):
     "Hostlist filed from DNSVS"
 
-    def __init__(self, con):
+    def __init__(self, input: Dict[str, Tuple[str, bool]]) -> None:
         super().__init__()
-        hosts = con.get_hosts()
-        for hostname, data in hosts.items():
+        for hostname, data in input.items():
             ip, is_nonunique = data
             self.append(host.Host(hostname, ip, is_nonunique))
 
@@ -62,7 +63,6 @@ class YMLHostlist(Hostlist):
 
     def __init__(self):
         super().__init__()
-        self.fileheaders = {}
         self.groups = defaultdict(list)
         input_ymls = sorted(glob.glob(Config["hostlistdir"] + '/*.yml'))
         logging.debug("Using %s" % ', '.join(input_ymls))
@@ -141,9 +141,11 @@ class YMLHostlist(Hostlist):
             self.check_cnames(cnames),
             self.check_duplicates(),
             self.check_missing_mac_ip(),
-            self.check_iprange_overlap(),
             all(h.run_checks() for h in self),
         ]
+
+        if isinstance(self, YMLHostlist):
+            checks.append(self.check_iprange_overlap())
 
         logging.info("consistency check finished")
         if not all(checks):
@@ -211,7 +213,7 @@ class YMLHostlist(Hostlist):
                 inverselist[prop][myhostprop] = h
         return success
 
-    def check_missing_mac_ip(self):
+    def check_missing_mac_ip(self) -> bool:
         """check if hosts are missing an ip or mac"""
 
         success = True
@@ -227,7 +229,7 @@ class YMLHostlist(Hostlist):
                     success = False
         return success
 
-    def check_iprange_overlap(self):
+    def check_iprange_overlap(self) -> bool:
         "check whether any of the ipranges given in headers overlap"
 
         overlaps = []
@@ -240,8 +242,8 @@ class YMLHostlist(Hostlist):
             except KeyError:
                 # one of the files does not have iprange defined, ignore it
                 continue
-            if ('iprange_allow_overlap' in headera and headera['iprange_allow_overlap']) or \
-               ('iprange_allow_overlap' in headerb and headerb['iprange_allow_overlap']):
+            if headera.get('iprange_allow_overlap', False) or \
+               headerb.get('iprange_allow_overlap', False):
                 # FIXME: check overlap for internal IPs
                 continue
 

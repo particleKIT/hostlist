@@ -4,9 +4,14 @@
 
 ### Added
 * add /list page in daemon with a table of hosts
+* type annotations for mypy
+
+### Changed
+* Use groups for need_*, gen_* instead of hardcoded variables
 
 ### Fixed
 * in consistency check on yml input, not synced hostlist
+* have daemon continue running also when git pull fails
 
 ## 1.2.0
 

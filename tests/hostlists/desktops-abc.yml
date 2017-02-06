@@ -19,4 +19,5 @@ hosts:
   - hostname: host5.abc.example.com
     mac: 00:12:34:ab:CD:F1
     ip: 198.51.100.5
-    gen_munin: True
+    groups:
+      - muninnode

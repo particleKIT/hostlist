@@ -25,8 +25,6 @@ class Host:
 
     def _set_defaults(self):
         self.vars = {
-            'needs_mac': True,
-            'needs_ip': True,
             'unique': True,
         }  # type: Dict[str, Any]
 
@@ -35,7 +33,7 @@ class Host:
         self.hostname = ""  # type: str
         self.publicip = True  # type: bool
         self.header = None  # stores header of input file
-        self.groups = set()  # type: set
+        self.groups = set(Config.get('groups', []))  # type: set
 
     def _set_fqdn(self):
         if self.hostname.endswith(Config["domain"]):
@@ -108,7 +106,7 @@ class YMLHost(Host):
     "Host generated from yml file entry"
 
     _num = '(2[0-5]|1[0-9]|[0-9])?[0-9]'
-    IPREGEXP = re.compile(r'^(' + _num + '\.){3}(' + _num + ')$')
+    IPREGEXP = re.compile(r'^(' + _num + r'\.){3}(' + _num + ')$')
     MACREGEXP = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
 
     def __init__(self,
@@ -129,6 +127,7 @@ class YMLHost(Host):
             for var, value in header.items():
                 self.vars[var] = value
             self.groups.update(header.get('groups', {}))
+            self.groups.difference_update(header.get('notgroups', {}))
 
         for var, value in inputdata.items():
             self.vars[var] = value

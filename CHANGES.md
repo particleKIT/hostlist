@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.3.0
+
+### Added
+* add /list page in daemon with a table of hosts
+
+### Fixed
+* in consistency check on yml input, not synced hostlist
 
 ## 1.2.0
 

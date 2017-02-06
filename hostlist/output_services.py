@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
+import os
 
 from .host import Host
 from .hostlist import Hostlist
@@ -168,3 +169,24 @@ class EthersOutput:
         )
         out = '\n'.join(entries)
         return out
+
+
+class WebOutput:
+    "HTML Table of hosts"
+
+    @classmethod
+    def gen_content(cls, hostlist, cnames):
+        if os.path.exists('header.html'):
+            with open('header.html') as file:
+                header = file.read()
+        else:
+            header = '<html><body>'
+
+        fields = Config.get('weboutput_columns', ['institute', 'hosttype', 'hostname'])
+        thead = '<table><thead><tr><th>' + '</th><th>'.join(fields) + '</th></tr></thead>\n'
+        footer = '</table></body></html>'
+        hostlist = '\n'.join(
+            '<tr><td>' + '</td><td>'.join(str(h.vars.get(field, '')) for field in fields) + '</td></tr>'
+            for h in hostlist
+        )
+        return header + thead + hostlist + footer

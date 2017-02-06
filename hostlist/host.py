@@ -59,9 +59,6 @@ class Host:
         domain = "%s.%s" % (institute, Config["domain"])
         return domain
 
-    def run_checks(self):
-        return True
-
     def __repr__(self) -> str:
         return self.output(delim=' ')
 
@@ -209,7 +206,7 @@ class YMLHost(Host):
                 subprocess.check_output(['id', self.vars['user']])
             except subprocess.CalledProcessError:
                 logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.hostname))
-                return False
+                # return False
         return True
 
     def filter(self, filter):

@@ -28,6 +28,113 @@ class Hostlist(list):
     def __str__(self):
         return '\n'.join([str(h) for h in self])
 
+    def diff(self, otherhostlist) -> types.SimpleNamespace:
+        diff = types.SimpleNamespace()
+        diff.add, diff.remove = [], []
+        hostnames = {h.fqdn: h.ip for h in self if h.publicip}
+        inversehostlist = {h.fqdn: h for h in self}
+
+        otherhostnames = {h.fqdn: h.ip for h in otherhostlist if h.publicip}
+        inverseotherhostlist = {h.fqdn: h for h in otherhostlist}
+
+        for fqdn, ip in hostnames.items():
+            if otherhostnames.get(fqdn) != ip:
+                diff.add.append(inversehostlist[fqdn])
+        for fqdn, ip in otherhostnames.items():
+            if hostnames.get(fqdn) != ip:
+                diff.remove.append(inverseotherhostlist[fqdn])
+
+        diff.empty = (not diff.add) and (not diff.remove)
+        return diff
+
+
+class DNSVSHostlist(Hostlist):
+    "Hostlist filed from DNSVS"
+
+    def __init__(self, input: Dict[str, Tuple[str, bool]]) -> None:
+        super().__init__()
+        for hostname, data in input.items():
+            ip, is_nonunique = data
+            self.append(host.Host(hostname, ip, is_nonunique))
+
+
+class YMLHostlist(Hostlist):
+    "Hostlist filed from yml file"
+
+    def __init__(self):
+        super().__init__()
+        self.groups = defaultdict(list)
+        input_ymls = sorted(glob.glob(Config["hostlistdir"] + '/*.yml'))
+        logging.debug("Using %s" % ', '.join(input_ymls))
+        for inputfile in input_ymls:
+            self._add_ymlhostfile(inputfile)
+
+    def _add_ymlhostfile(self, fname):
+        "parse all hosts in fname and add them to this hostlist"
+
+        shortname = os.path.splitext(os.path.basename(fname))[0]
+        if shortname.count('-') > 1:
+            logging.error('Filename %s contains to many dashes. Skipped.')
+            return
+        if '-' in shortname:
+            # get abc, def from hostlists/abc-def.yml
+            hosttype, institute = shortname.split('-')
+        else:
+            hosttype = shortname
+            institute = None
+        try:
+            infile = open(fname, 'r')
+        except:
+            logging.error('file %s not readable' % fname)
+            return
+
+        try:
+            yamlsections = yaml.load_all(infile, Loader=SafeLoader)
+        except yaml.YAMLError as e:
+            logging.error('file %s not correct yml' % fname)
+            logging.error(str(e))
+            return
+
+        for yamlout in yamlsections:
+            self._parse_section(yamlout, fname, hosttype, institute)
+
+        self._fix_docker_ports()
+
+    def _parse_section(self, yamlout, fname, hosttype, institute):
+        for field in ('header', 'hosts'):
+            if field not in yamlout:
+                logging.error('missing field %s in %s' % (field, fname))
+
+        header = yamlout['header']
+        if 'iprange' in header:
+            ipstart, ipend = header['iprange']
+            header['iprange'] = ipaddress.ip_address(ipstart), ipaddress.ip_address(ipend)
+        self.fileheaders[os.path.basename(fname)] = header
+
+        for hostdata in yamlout["hosts"]:
+            newhost = host.YMLHost(hostdata, hosttype, institute, header)
+            self.append(newhost)
+            for group in newhost.groups:
+                self.groups[group].append(newhost)
+
+    def _fix_docker_ports(self):
+        for h in self:
+            if 'docker' in h.vars and 'ports' in h.vars['docker']:
+                # prefix docker ports with container IP
+                h.vars['docker']['ports'] = [
+                    str(h.ip) + ':' + port for port in h.vars['docker']['ports']
+                ]
+
+    def print(self, filter):
+        filtered = [h for h in self if h.filter(filter)]
+        for h in filtered:
+            if logging.getLogger().level == logging.DEBUG:
+                print(h.output(printgroups=True, printallvars=True))
+            elif logging.getLogger().level == logging.INFO:
+                print(h.output(delim='\t', printgroups=True))
+            else:
+                print(h.hostname)
+
     def check_consistency(self, cnames):
         checks = [
             self.check_nonunique(),
@@ -149,110 +256,3 @@ class Hostlist(list):
             for overlap in overlaps:
                 logging.error("Found overlap from %s to %s in files %s and %s." % overlap)
         return not bool(overlaps)
-
-    def diff(self, otherhostlist) -> types.SimpleNamespace:
-        diff = types.SimpleNamespace()
-        diff.add, diff.remove = [], []
-        hostnames = {h.fqdn: h.ip for h in self if h.publicip}
-        inversehostlist = {h.fqdn: h for h in self}
-
-        otherhostnames = {h.fqdn: h.ip for h in otherhostlist if h.publicip}
-        inverseotherhostlist = {h.fqdn: h for h in otherhostlist}
-
-        for fqdn, ip in hostnames.items():
-            if otherhostnames.get(fqdn) != ip:
-                diff.add.append(inversehostlist[fqdn])
-        for fqdn, ip in otherhostnames.items():
-            if hostnames.get(fqdn) != ip:
-                diff.remove.append(inverseotherhostlist[fqdn])
-
-        diff.empty = (not diff.add) and (not diff.remove)
-        return diff
-
-
-class DNSVSHostlist(Hostlist):
-    "Hostlist filed from DNSVS"
-
-    def __init__(self, input: Dict[str, Tuple[str, bool]]) -> None:
-        super().__init__()
-        for hostname, data in input.items():
-            ip, is_nonunique = data
-            self.append(host.Host(hostname, ip, is_nonunique))
-
-
-class YMLHostlist(Hostlist):
-    "Hostlist filed from yml file"
-
-    def __init__(self):
-        super().__init__()
-        self.groups = defaultdict(list)
-        input_ymls = sorted(glob.glob(Config["hostlistdir"] + '/*.yml'))
-        logging.debug("Using %s" % ', '.join(input_ymls))
-        for inputfile in input_ymls:
-            self._add_ymlhostfile(inputfile)
-
-    def _add_ymlhostfile(self, fname):
-        "parse all hosts in fname and add them to this hostlist"
-
-        shortname = os.path.splitext(os.path.basename(fname))[0]
-        if shortname.count('-') > 1:
-            logging.error('Filename %s contains to many dashes. Skipped.')
-            return
-        if '-' in shortname:
-            # get abc, def from hostlists/abc-def.yml
-            hosttype, institute = shortname.split('-')
-        else:
-            hosttype = shortname
-            institute = None
-        try:
-            infile = open(fname, 'r')
-        except:
-            logging.error('file %s not readable' % fname)
-            return
-
-        try:
-            yamlsections = yaml.load_all(infile, Loader=SafeLoader)
-        except yaml.YAMLError as e:
-            logging.error('file %s not correct yml' % fname)
-            logging.error(str(e))
-            return
-
-        for yamlout in yamlsections:
-            self._parse_section(yamlout, fname, hosttype, institute)
-
-        self._fix_docker_ports()
-
-    def _parse_section(self, yamlout, fname, hosttype, institute):
-        for field in ('header', 'hosts'):
-            if field not in yamlout:
-                logging.error('missing field %s in %s' % (field, fname))
-
-        header = yamlout['header']
-        if 'iprange' in header:
-            ipstart, ipend = header['iprange']
-            header['iprange'] = ipaddress.ip_address(ipstart), ipaddress.ip_address(ipend)
-        self.fileheaders[os.path.basename(fname)] = header
-
-        for hostdata in yamlout["hosts"]:
-            newhost = host.YMLHost(hostdata, hosttype, institute, header)
-            self.append(newhost)
-            for group in newhost.groups:
-                self.groups[group].append(newhost)
-
-    def _fix_docker_ports(self):
-        for h in self:
-            if 'docker' in h.vars and 'ports' in h.vars['docker']:
-                # prefix docker ports with container IP
-                h.vars['docker']['ports'] = [
-                    str(h.ip) + ':' + port for port in h.vars['docker']['ports']
-                ]
-
-    def print(self, filter):
-        filtered = [h for h in self if h.filter(filter)]
-        for h in filtered:
-            if logging.getLogger().level == logging.DEBUG:
-                print(h.output(printgroups=True, printallvars=True))
-            elif logging.getLogger().level == logging.INFO:
-                print(h.output(delim='\t', printgroups=True))
-            else:
-                print(h.hostname)

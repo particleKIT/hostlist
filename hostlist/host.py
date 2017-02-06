@@ -24,8 +24,6 @@ class Host:
 
     def _set_defaults(self):
         self.vars = {
-            'needs_mac': True,
-            'needs_ip': True,
             'unique': True,
         }
 
@@ -106,7 +104,7 @@ class YMLHost(Host):
     "Host generated from yml file entry"
 
     _num = '(2[0-5]|1[0-9]|[0-9])?[0-9]'
-    IPREGEXP = re.compile(r'^(' + _num + '\.){3}(' + _num + ')$')
+    IPREGEXP = re.compile(r'^(' + _num + r'\.){3}(' + _num + ')$')
     MACREGEXP = re.compile(r'^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$')
 
     def __init__(self, inputdata, hosttype, institute, header=None):
@@ -117,12 +115,13 @@ class YMLHost(Host):
         self._set_defaults()
         self.vars['hosttype'] = hosttype
         self.vars['institute'] = institute
-        self.groups = set()
+        self.groups = set(Config.get('groups', []))
 
         if header:
             for var, value in header.items():
                 self.vars[var] = value
             self.groups.update(header.get('groups', {}))
+            self.groups.difference_update(header.get('notgroups', {}))
 
         for var, value in inputdata.items():
             self.vars[var] = value

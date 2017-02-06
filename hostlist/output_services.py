@@ -12,7 +12,11 @@ class Ssh_Known_HostsOutput:
     @classmethod
     def gen_content(cls, hostlist, cnames):
         # only scan keys on hosts that are in ansible
-        scan_hosts = [h for h in hostlist if h.vars.get('gen_ssh_known_hosts', False)]
+        scan_hosts = [
+            h for h in hostlist
+            if h.vars.get('gen_ssh_known_hosts', False) or
+            'ssh_known_hosts' in h.groups
+        ]
         aliases = [alias
                    for host in scan_hosts
                    for alias in host.aliases
@@ -42,7 +46,11 @@ class MuninOutput:
 
     @classmethod
     def gen_content(cls, hostlist, cnames):
-        hostnames = (h for h in hostlist if h.vars.get('gen_munin', False))
+        hostnames = (
+            h for h in hostlist
+            if h.vars.get('gen_munin', False) or
+            'muninnode' in h.groups
+        )
         fcont = ''
         for host in hostnames:
             fcont += cls._get_hostblock(host)
@@ -115,7 +123,7 @@ class AnsibleOutput:
         docker_services = {}
         for host in hostlist:
             # online add hosts that have ansible=yes
-            if 'ansible' in host.vars and not host.vars['ansible']:
+            if 'ansible' not in host.groups and ('ansible' in host.vars and not host.vars['ansible']):
                 continue
             ans = cls._gen_host_content(host)
             hostvars[ans['fqdn']] = ans['vars']

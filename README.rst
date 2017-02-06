@@ -21,8 +21,8 @@ The main configuration is in ``config.yml`` in the working directory.
 Hostlists are collected in a directory listed in ``config.yml``.
 
 
-Format of hostlists and special fields
---------------------------------------
+Format of hostlists
+-------------------
 
 The hostlists are files under ``hostlists``. The file format is either
 ``hosttype-institute.yml`` or ``hosttype.yml``, i.e. 0 or 1 dash. The filename will
@@ -33,14 +33,25 @@ yaml document starts with a line containing only ``---``.
 
 Each yaml document document has a ``header`` and a list of ``hosts``.
 The header has to have an iprange, that lists the allowed range for the hosts in
-the file. It can also set variables, that will then be used for hosts, like
-needs_mac, gen_munin, ansible, ...
+the file. It can also set variables and groups.
 
 The hostlist is a list of dicts, which each need a hostname and an ip and can
 take other variables.
 
+Variables and Groups
+--------------------
+
+Each host has a list of variables (dict) associated with it as well as a list of groups (set).
+
 If variables are set in multiple places they are overwritten in this order:
 filename < header < host
+
+For groups a default is set in the config file. 
+In the header and the host definition one can define lists ``groups`` and ``notgroups`` that are added/subtracted from the list of
+groups for that host.
+
+Groups are used to define which hosts are used in some outputs (muninnode, ssh_known_hosts) or which hosts should be included for
+checks (needs_ip, needs_mac).
 
 
 Checks

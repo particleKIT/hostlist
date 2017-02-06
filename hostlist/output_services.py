@@ -17,8 +17,7 @@ class Ssh_Known_HostsOutput:
         # only scan keys on hosts that are in ansible
         scan_hosts = [
             h for h in hostlist
-            if h.vars.get('gen_ssh_known_hosts', False) or
-            'ssh_known_hosts' in h.groups
+            if 'ssh_known_hosts' in h.groups
         ]
         aliases = [alias
                    for host in scan_hosts
@@ -51,8 +50,7 @@ class MuninOutput:
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         hostnames = (
             h for h in hostlist
-            if h.vars.get('gen_munin', False) or
-            'muninnode' in h.groups
+            if 'muninnode' in h.groups
         )
         fcont = ''
         for host in hostnames:

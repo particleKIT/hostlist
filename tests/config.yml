@@ -9,4 +9,7 @@ iprange:
 nonunique_ips:
   - 198.51.100.10
 
+ansiblevars:
+  - some_var
+
 hostlistdir: hostlists/

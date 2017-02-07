@@ -12,8 +12,7 @@ import cherrypy
 from . import hostlist
 from . import cnamelist
 from . import output_services
-# from hostlist.config import CONFIGINSTANCE as Config
-
+from .config import CONFIGINSTANCE as Config
 
 class Inventory():
 
@@ -36,6 +35,7 @@ class Inventory():
                 logging.error("Hosts repo not up to date after pull.")
         except:
             logging.error("Failed to pull hosts repo.")
+        Config.load()
         self.hostlist = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()
         print("Refreshed cache.")

@@ -20,7 +20,9 @@ class Config(dict):
         "read config from file"
         try:
             with open(self.CONFIGNAME, 'r') as configfile:
-                self.update(yaml.safe_load(configfile))
+                newconfig = yaml.safe_load(configfile)
+                self.clear()
+                self.update(newconfig)
             logging.info("loaded " + self.CONFIGNAME)
             self._loaded = True
         except:

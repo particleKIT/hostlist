@@ -124,7 +124,7 @@ class AnsibleOutput:
         docker_services = {}
         for host in hostlist:
             # online add hosts that have ansible=yes
-            if 'ansible' not in host.groups and ('ansible' in host.vars and not host.vars['ansible']):
+            if 'ansible' not in host.groups:
                 continue
             ans = cls._gen_host_content(host)
             hostvars[ans['fqdn']] = ans['vars']

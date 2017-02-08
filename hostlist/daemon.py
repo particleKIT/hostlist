@@ -14,6 +14,7 @@ from . import cnamelist
 from . import output_services
 from .config import CONFIGINSTANCE as Config
 
+
 class Inventory():
 
     def __init__(self):

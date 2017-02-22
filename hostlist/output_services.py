@@ -38,9 +38,13 @@ class HostsOutput:
 
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
-        hoststrings = (str(h.ip) + " " + " ".join(h.aliases) for h in hostlist if h.ip)
-        content = '\n'.join(hoststrings)
-        return content
+        out = []
+        for thish in hostlist:
+            if thish.ip:
+                out.append(str(thish.ip) + " " + " ".join(thish.aliases))
+            if hasattr(thish, 'ipv6'):
+                out.append(str(thish.ipv6) + " " + " ".join(thish.aliases))
+        return '\n'.join(out)
 
 
 class MuninOutput:

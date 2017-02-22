@@ -4,7 +4,8 @@ import requests
 import json
 import os.path
 import logging
-from typing import Optional, Dict, Tuple, List
+from collections import defaultdict
+from typing import Optional, Dict, Tuple, List, Any
 
 from ..host import Host
 from ..cnamelist import CName
@@ -21,12 +22,16 @@ class DNSVSInterface:
     # all our entries ar IPv4
     inttype_a = "host:0100,:,402,A"
     inttype_nonunique = "domain:1000,:,400,A"
+    inttype_v6_unique = "host:0100,:,602,AAAA"
+    inttype_v6_nonunique = "host:0100,:,600,AAAA"
     inttype_cname = "alias:0000,host:0100,011,CNAME"
 
     headers_dict = {"Content-Type": "application/json"}
 
-    def _execute(self, url: str, method: str, data: Optional[str]=None) -> List:
+    def _execute(self, url: str, method: str, dataobj: Optional[str]=None, data: Optional[str]=None) -> List:
         """Actually perform an operation on the DNS server."""
+        if dataobj is not None:
+            data = json.dumps(dataobj)
         try:
             if method == "get":
                 response = requests.get(url=url, headers=self.headers_dict, cert=self.certfilename)
@@ -39,48 +44,60 @@ class DNSVSInterface:
         except Exception as e:
             logging.error(str(e))
             raise
-        return []
 
-    def get_hosts(self) -> Dict[str, Tuple[str, bool]]:
-        """Reads A records from the server."""
+    def get_hosts_cnames(self) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str]]:
+        """Reads A, AAAA and CNAME records from the server."""
         result = self._execute(self.geturl, method="get")
         # continue with normal request (process result)
-        hosts = {}
+        hosts = defaultdict(dict)
+        cnames = {}
         for entry in result:
             fqdn = entry['fqdn'].rstrip(".")
             if entry['type'] == 'A':
-                is_nonunique = entry['inttype'] == self.inttype_nonunique
-                hosts[fqdn] = (entry['data'], is_nonunique)
-        return hosts
+                hosts[fqdn]['ip'] = entry['data']
+                hosts[fqdn]['is_nonunique'] = entry['inttype'] == self.inttype_nonunique
+            elif entry['type'] == 'AAAA':
+               # TODO:
+               # is_nonunique = entry['inttype'] == self.inttype_nonunique
+               # potentially this can be ignored for v6
+                hosts[fqdn]['ipv6'] = entry['data']
+            elif entry['type'] == 'CNAME':
+                cnames[fqdn] = entry['data'].rstrip(".")
+            elif entry['type'] == 'PTR':
+                # not handling PTR records, assume they are correct
+                continue
+            else:
+                logging.error('non-parsable type revieved from DNSVS, ignoring:')
+                logging.error(entry)
+        return hosts, cnames
 
-    def get_cnames(self) -> Dict[str, str]:
-        """Reads CNAME records from the server."""
-        result = self._execute(self.geturl, method="get")
-        # continue with normal request (process result)
-        cname = {}
-        # cname = {
-        #     entry['fqdn'].rstrip("."): entr["data"].rstrip(".")
-        #     for entry in result if entry["type"] == 'CNAME'
-        # }
-        for entry in result:
-            fqdn = entry['fqdn'].rstrip(".")
-            if entry['type'] == 'CNAME':
-                cname[fqdn] = entry['data'].rstrip(".")
-        return cname
 
-    def add(self, entry):
-        """generic interface to add_*"""
-        if isinstance(entry, Host):
-            self.add_host(entry)
-        elif isinstance(entry, CName):
-            self.add_cname(entry)
+    def add_hostv6(self, host: Host) -> None:
+        """Adds an AAAA record to the server."""
+        # TODO: add nonunique AAAA
+        #inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
+        dataobj = [
+            {"param_list": [
+                {"name": "fqdn", "new_value": host.fqdn + "."},
+                {"name": "data", "new_value": str(host.ipv6)},
+                {"name": "inttype", "new_value": self.inttype_v6_unique},
+            ]},
+        ]
+        self._execute(url=self.createurl, method="post", dataobj=dataobj)
 
-    def remove(self, entry):
-        """generic interface to remove_*"""
-        if isinstance(entry, Host):
-            self.remove_host(entry)
-        elif isinstance(entry, CName):
-            self.remove_cname(entry)
+    def remove_hostv6(self, host: Host) -> None:
+        """Adds an AAAA record to the server."""
+        # TODO: add nonunique AAAA
+        #inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
+        dataobj = [
+            {"param_list": [
+                {"name": "fqdn", "old_value": host.fqdn + "."},
+                {"name": "data", "old_value": str(host.ipv6)},
+                {"name": "inttype", "old_value": self.inttype_v6_unique},
+            ]},
+        ]
+        self._execute(url=self.deleteurl, method="post", dataobj=dataobj)
+
 
     def add_host(self, host: Host) -> None:
         """Adds an A record to the server."""
@@ -109,6 +126,7 @@ class DNSVSInterface:
         ]
         json_string = json.dumps(data)
         self._execute(url=self.createurl, method="post", data=json_string)
+
 
     def remove_host(self, host: Host) -> None:
         """Remove an A record from the server."""

@@ -31,10 +31,13 @@ class Hostlist(list):
     def diff(self, otherhostlist) -> types.SimpleNamespace:
         diff = types.SimpleNamespace()
         diff.add, diff.remove = [], []
+        diff.addv6, diff.removev6 = [], []
         hostnames = {h.fqdn: h.ip for h in self if h.publicip}
+        hostnamesv6 = {h.fqdn: h.ipv6 for h in self if h.publicip and hasattr(h, 'ipv6')}
         inversehostlist = {h.fqdn: h for h in self}
 
         otherhostnames = {h.fqdn: h.ip for h in otherhostlist if h.publicip}
+        otherhostnamesv6 = {h.fqdn: h.ipv6 for h in otherhostlist if h.publicip and hasattr(h, 'ipv6')}
         inverseotherhostlist = {h.fqdn: h for h in otherhostlist}
 
         for fqdn, ip in hostnames.items():
@@ -44,7 +47,15 @@ class Hostlist(list):
             if hostnames.get(fqdn) != ip:
                 diff.remove.append(inverseotherhostlist[fqdn])
 
-        diff.empty = (not diff.add) and (not diff.remove)
+        for fqdn, ipv6 in hostnamesv6.items():
+            if otherhostnamesv6.get(fqdn) != ipv6:
+                diff.addv6.append(inversehostlist[fqdn])
+        for fqdn, ipv6 in otherhostnamesv6.items():
+            if hostnamesv6.get(fqdn) != ipv6:
+                diff.removev6.append(inverseotherhostlist[fqdn])
+
+        diff.empty = not any((diff.add, diff.remove, diff.addv6, diff.removev6))
+
         return diff
 
 
@@ -54,8 +65,7 @@ class DNSVSHostlist(Hostlist):
     def __init__(self, input: Dict[str, Tuple[str, bool]]) -> None:
         super().__init__()
         for hostname, data in input.items():
-            ip, is_nonunique = data
-            self.append(host.Host(hostname, ip, is_nonunique))
+            self.append(host.Host(hostname, **data))
 
 
 class YMLHostlist(Hostlist):

@@ -53,17 +53,6 @@ def parse_args(services: List[str]) -> argparse.Namespace:
     return args
 
 
-def combine_diffs(*diffs):
-    """combines several diffs into one"""
-    total = types.SimpleNamespace()
-    total.add, total.remove = [], []
-    for diff in diffs:
-        total.add.extend(diff.add)
-        total.remove.extend(diff.remove)
-    total.empty = (not total.add) and (not total.remove)
-    return total
-
-
 def sync_dnsvs(file_hostlist, file_cnames, dryrun):
     "sync hostlist with dnsvs"
     if not HAS_DNSVS:
@@ -71,11 +60,9 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
         return
     try:
         con = DNSVSInterface()
-        logging.info("loading hostlist from dnsvs")
-        hostinput = con.get_hosts()
+        logging.info("loading hosts and cnames from dnsvs")
+        hostinput, cnameinput = con.get_hosts_cnames()
         dnsvs_hostlist = hostlist.DNSVSHostlist(hostinput)
-        logging.info("loading cnames from dnsvs")
-        cnameinput = con.get_cnames()
         dnsvs_cnames = cnamelist.DNSVSCNamelist(cnameinput)
     except Exception as exc:
         logging.error(exc)
@@ -84,19 +71,19 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
                       " cf. Readme.md.")
         logging.error("Not syncing with DNSVS.")
     else:
-        dnsvs_diff = file_hostlist.diff(dnsvs_hostlist)
-        dnsvs_cnames_diff = file_cnames.diff(dnsvs_cnames)
-        total_diff = combine_diffs(dnsvs_diff, dnsvs_cnames_diff)
-        if total_diff.empty:
+        host_diff = file_hostlist.diff(dnsvs_hostlist)
+        cname_diff = file_cnames.diff(dnsvs_cnames)
+        diff_empty = cname_diff.empty and host_diff.empty
+        if diff_empty:
             logging.info("DNSVS and local files agree, nothing to do")
         else:
-            sync.print_diff(total_diff)
+            sync.print_diff(host_diff, cname_diff)
 
-        if not dryrun and not total_diff.empty:
+        if not dryrun and not diff_empty:
             print("Do you want to apply this patch to dnsvs? (y/n)")
             choice = input().lower()
             if choice != '' and strtobool(choice):
-                sync.apply_diff(total_diff)
+                sync.apply_diff(host_diff, cname_diff)
 
 
 def run_service(service: str, file_hostlist: hostlist.Hostlist, file_cnames: cnamelist.CNamelist) -> None:

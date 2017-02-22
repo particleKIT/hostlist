@@ -16,28 +16,33 @@ except ImportError:
         return text
 
 
-DiffStep = namedtuple('Diffstep', ('type', 'action', 'function', 'label'))
+DiffStep = namedtuple('Diffstep', ('list', 'function', 'label'))
 
 
-def apply_diff(diff):
+def apply_diff(host_diff: SimpleNamespace, cname_diff: SimpleNamespace):
     con = DNSVSInterface()
     steps = [
-        DiffStep(CName, diff.remove, con.remove_cname, 'removing cname'),
-        DiffStep(Host, diff.remove, con.remove_host, 'removing host'),
-        DiffStep(Host, diff.add, con.add_host, 'adding host'),
-        DiffStep(CName, diff.add, con.add_cname, 'adding cname'),
+        DiffStep(cname_diff.remove, con.remove_cname, 'removing cname'),
+        DiffStep(host_diff.remove, con.remove_host, 'removing host'),
+        DiffStep(host_diff.removev6, con.remove_hostv6, 'removing host'),
+        DiffStep(host_diff.add, con.add_host, 'adding host'),
+        DiffStep(host_diff.addv6, con.add_hostv6, 'adding host'),
+        DiffStep(cname_diff.add, con.add_cname, 'adding cname'),
     ]
     for step in steps:
-        sublist = list(filter(lambda x: isinstance(x, step.type), step.action))
-        for entry in sublist:
+        for entry in step.list:
             logging.info(step.label + '\t' + str(entry))
             step.function(entry)
 
 
-def print_diff(diff: SimpleNamespace) -> None:
+def print_diff(host_diff: SimpleNamespace, cname_diff: SimpleNamespace) -> None:
     for section, label, color, sign in [
-        (diff.add, 'local files', 'green', '+'),
-        (diff.remove, 'DNSVS', 'red', '-'),
+        (host_diff.add, 'local files', 'green', '+'),
+        (host_diff.addv6, 'local files (v6)', 'green', '+'),
+        (cname_diff.add, 'local files', 'green', '+'),
+        (host_diff.remove, 'DNSVS', 'red', '-'),
+        (host_diff.removev6, 'DNSVS (v6)', 'red', '-'),
+        (cname_diff.remove, 'DNSVS (v6)', 'red', '-'),
     ]:
         if section:
             print(colored("Only in " + label + ": ", color))

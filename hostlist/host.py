@@ -15,9 +15,14 @@ class Host:
     Representation of one host with several properties
     """
 
-    def __init__(self, hostname: str, ip: str, is_nonunique: bool=False) -> None:
+    def __init__(self, hostname: str, ip: str="", ipv6: str="", is_nonunique: bool=False) -> None:
         self._set_defaults()
-        self.ip = ipaddress.ip_address(ip)
+        if ip:
+            self.ip = ipaddress.ip_address(ip)
+        else:
+            logging.warning('host without ipv4: '+hostname)
+        if ipv6:
+            self.ipv6 = ipaddress.ip_address(ipv6)
         self.hostname = hostname
         self.vars['unique'] = not is_nonunique
         self._set_fqdn()
@@ -47,11 +52,12 @@ class Host:
             self.fqdn = self.hostname + '.' + self.domain  # type: str
 
     def _set_publicip(self):
-        if not self.ip or self.ip in ipaddress.ip_network(Config["iprange"]["internal"]):
-            self.publicip = False
-        else:
-            assert self.ip in ipaddress.ip_network(Config["iprange"]["external"])
+        if self.ip and self.ip in ipaddress.ip_network(Config["iprange"]["external"]) or \
+            hasattr(self, 'ipv6'):
             self.publicip = True
+        else:
+            self.publicip = False
+            assert self.ip is None or self.ip in ipaddress.ip_network(Config["iprange"]["internal"])
 
     def get_domain(self, institute):
         domain = "%s.%s" % (institute, Config["domain"])
@@ -74,6 +80,8 @@ class Host:
             ("Hostname: ", self.fqdn),
             ("IP: ", str(self.ip) + " (nonunique)" if not self.vars['unique'] else self.ip),
         ]
+        if hasattr(self, 'ipv6'):
+            infos.append(("IPv6: ", self.ipv6))
         if printmac:
             infos.append(("MAC: ", self.mac))
 
@@ -159,10 +167,16 @@ class YMLHost(Host):
         "Check validity of vars set for host."
         try:
             assert self.IPREGEXP.match(self.vars['ip'])
-            self.ip = ipaddress.ip_address(self.vars['ip'])
-            assert isinstance(self.ip, ipaddress.IPv4Address)
+            self.ip = ipaddress.IPv4Address(self.vars['ip'])
         except:
             raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.vars['ip']))
+        try:
+            if 'ipv6' in self.vars:
+                self.ipv6 = ipaddress.IPv6Address(self.vars['ipv6'])
+            elif 'ipv6' in self.groups:
+                self.ipv6 = ipaddress.IPv6Address(Config['ipv6_prefix'] + self.vars['ip'])
+        except:
+            raise Exception("Host %s does not have a valid IPv6 address (%s)." % (self.hostname, self.vars['ipv6']))
         if 'mac' in self.vars:
             try:
                 assert self.MACREGEXP.match(self.vars['mac'])

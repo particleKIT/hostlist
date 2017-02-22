@@ -5,7 +5,7 @@ import json
 import os.path
 import logging
 from collections import defaultdict
-from typing import Optional, Dict, Tuple, List, Any
+from typing import Optional, Dict, Tuple, List, Any, Union  # noqa: F401
 
 from ..host import Host
 from ..cnamelist import CName
@@ -28,7 +28,7 @@ class DNSVSInterface:
 
     headers_dict = {"Content-Type": "application/json"}
 
-    def _execute(self, url: str, method: str, dataobj: Optional[str]=None, data: Optional[str]=None) -> List:
+    def _execute(self, url: str, method: str, dataobj: Optional[List[Dict]]=None, data: Optional[str]=None) -> List:
         """Actually perform an operation on the DNS server."""
         if dataobj is not None:
             data = json.dumps(dataobj)
@@ -45,12 +45,12 @@ class DNSVSInterface:
             logging.error(str(e))
             raise
 
-    def get_hosts_cnames(self) -> Tuple[Dict[str, Dict[str, Any]], Dict[str, str]]:
+    def get_hosts_cnames(self) -> Tuple[Dict[str, Dict[str, Dict]], Dict[str, str]]:
         """Reads A, AAAA and CNAME records from the server."""
         result = self._execute(self.geturl, method="get")
         # continue with normal request (process result)
-        hosts = defaultdict(dict)
-        cnames = {}
+        hosts = defaultdict(dict)  # type: Dict[str, Dict]
+        cnames = {}  # type: Dict[str, str]
         for entry in result:
             fqdn = entry['fqdn'].rstrip(".")
             if entry['type'] == 'A':

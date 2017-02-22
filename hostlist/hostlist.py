@@ -9,7 +9,7 @@ import ipaddress
 import itertools
 import glob
 import yaml
-from typing import Dict, Tuple
+from typing import Dict
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
@@ -62,7 +62,7 @@ class Hostlist(list):
 class DNSVSHostlist(Hostlist):
     "Hostlist filed from DNSVS"
 
-    def __init__(self, input: Dict[str, Tuple[str, bool]]) -> None:
+    def __init__(self, input: Dict[str, Dict]) -> None:
         super().__init__()
         for hostname, data in input.items():
             self.append(host.Host(hostname, **data))

@@ -3,7 +3,6 @@
 
 import argparse
 import logging
-import types
 from distutils.util import strtobool
 import sys
 import json

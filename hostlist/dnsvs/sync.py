@@ -5,8 +5,6 @@ from types import SimpleNamespace
 from collections import namedtuple
 
 from . import DNSVSInterface
-from ..cnamelist import CName
-from ..host import Host
 
 # use termcolor when available, otherwise ignore
 try:

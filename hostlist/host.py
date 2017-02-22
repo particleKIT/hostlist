@@ -20,7 +20,7 @@ class Host:
         if ip:
             self.ip = ipaddress.ip_address(ip)
         else:
-            logging.warning('host without ipv4: '+hostname)
+            logging.warning('host without ipv4: ' + hostname)
         if ipv6:
             self.ipv6 = ipaddress.ip_address(ipv6)
         self.hostname = hostname
@@ -53,7 +53,7 @@ class Host:
 
     def _set_publicip(self):
         if self.ip and self.ip in ipaddress.ip_network(Config["iprange"]["external"]) or \
-            hasattr(self, 'ipv6'):
+           hasattr(self, 'ipv6'):
             self.publicip = True
         else:
             self.publicip = False

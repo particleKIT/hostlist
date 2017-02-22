@@ -57,9 +57,9 @@ class DNSVSInterface:
                 hosts[fqdn]['ip'] = entry['data']
                 hosts[fqdn]['is_nonunique'] = entry['inttype'] == self.inttype_nonunique
             elif entry['type'] == 'AAAA':
-               # TODO:
-               # is_nonunique = entry['inttype'] == self.inttype_nonunique
-               # potentially this can be ignored for v6
+                # TODO:
+                # is_nonunique = entry['inttype'] == self.inttype_nonunique
+                # potentially this can be ignored for v6
                 hosts[fqdn]['ipv6'] = entry['data']
             elif entry['type'] == 'CNAME':
                 cnames[fqdn] = entry['data'].rstrip(".")
@@ -71,11 +71,10 @@ class DNSVSInterface:
                 logging.error(entry)
         return hosts, cnames
 
-
     def add_hostv6(self, host: Host) -> None:
         """Adds an AAAA record to the server."""
         # TODO: add nonunique AAAA
-        #inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
+        # inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
         dataobj = [
             {"param_list": [
                 {"name": "fqdn", "new_value": host.fqdn + "."},
@@ -88,7 +87,7 @@ class DNSVSInterface:
     def remove_hostv6(self, host: Host) -> None:
         """Adds an AAAA record to the server."""
         # TODO: add nonunique AAAA
-        #inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
+        # inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
         dataobj = [
             {"param_list": [
                 {"name": "fqdn", "old_value": host.fqdn + "."},
@@ -97,7 +96,6 @@ class DNSVSInterface:
             ]},
         ]
         self._execute(url=self.deleteurl, method="post", dataobj=dataobj)
-
 
     def add_host(self, host: Host) -> None:
         """Adds an A record to the server."""
@@ -126,7 +124,6 @@ class DNSVSInterface:
         ]
         json_string = json.dumps(data)
         self._execute(url=self.createurl, method="post", data=json_string)
-
 
     def remove_host(self, host: Host) -> None:
         """Remove an A record from the server."""

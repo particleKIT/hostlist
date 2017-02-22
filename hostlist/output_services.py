@@ -79,21 +79,31 @@ class DhcpOutput:
         out = ""
         for host in hostlist:
             entry = cls._gen_hostline(host)
-            if not entry:
-                continue
-            out += entry + '\n'
+            if entry:
+                out += entry + '\n'
         return out
 
     @staticmethod
     def _gen_hostline(host: Host) -> str:
-        if host.mac and host.ip:
+        if host.mac and (host.ip or hasattr(host, 'ipv6')):
+            ipstrings = []
+            if host.ip:
+                ipstrings.append('fixed-address {ip};\n'.format(ip=host.ip))
+            if hasattr(host, 'ipv6'):
+                ipstrings.append('fixed-address6 {ipv6};\n'.format(ipv6=host.ipv6))
             # curly brackets doubled for python format function
             return """host {fqdn} {{
         hardware ethernet {mac};
-        fixed-address {ip};
+        {ip}
         option host-name "{hostname}";
         option domain-name "{domain}";
-        }}""".format(fqdn=host.fqdn, mac=host.mac, ip=host.ip, hostname=host.hostname, domain=host.domain)
+        }}""".format(
+            fqdn=host.fqdn, 
+            mac=host.mac, 
+            ip='\n'.join(ipstrings), 
+            hostname=host.hostname, 
+            domain=host.domain
+        )
 
 
 class AnsibleOutput:
@@ -138,6 +148,8 @@ class AnsibleOutput:
                 docker_services[host.hostname] = ans['vars']['docker']
                 docker_services[host.hostname]['fqdn'] = host.fqdn
                 docker_services[host.hostname]['ip'] = str(host.ip)
+                if hasattr(host, 'ipv6'):
+                    docker_services[host.hostname]['ipv6'] = str(host.ipv6)
 
         resultdict['_meta'] = {'hostvars': hostvars}
         if docker_services:
@@ -156,6 +168,8 @@ class AnsibleOutput:
         }
         if host.ip:
             result['vars']['ip'] = str(host.ip)
+        if hasattr(host, 'ipv6'):
+            result['vars']['ipv6'] = str(host.ipv6)
 
         ansiblevars = Config.get('ansiblevars', []) + ['hosttype', 'institute', 'docker']
         for avar in ansiblevars:

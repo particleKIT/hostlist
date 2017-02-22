@@ -15,18 +15,16 @@ class Ssh_Known_HostsOutput:
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         # only scan keys on hosts that are in ansible
-        scan_hosts = [
-            h for h in hostlist
-            if 'ssh_known_hosts' in h.groups
-        ]
-        aliases = [alias
-                   for host in scan_hosts
-                   for alias in host.aliases
-                   if host.ip]
-        aliases += [str(host.ip)
-                    for host in scan_hosts
-                    if host.ip]
-        aliases += [cname.fqdn for cname in cnames]
+        scan_hosts = filter(lambda h: 'ssh_known_hosts' in h.groups, hostlist)
+
+        aliases = []
+        for host in scan_hosts:
+            if host.ip:
+                aliases += host.aliases
+                aliases.append(str(host.ip))
+            if hasattr(host, 'ipv6'):
+                aliases.append(str(host.ipv6))
+        aliases.extend((cname.fqdn for cname in cnames))
 
         fcont = '\n'.join(aliases)
 

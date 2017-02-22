@@ -88,9 +88,9 @@ class DhcpOutput:
         if host.mac and (host.ip or hasattr(host, 'ipv6')):
             ipstrings = []
             if host.ip:
-                ipstrings.append('fixed-address {ip};\n'.format(ip=host.ip))
+                ipstrings.append('fixed-address {ip};'.format(ip=host.ip))
             if hasattr(host, 'ipv6'):
-                ipstrings.append('fixed-address6 {ipv6};\n'.format(ipv6=host.ipv6))
+                ipstrings.append('fixed-address6 {ipv6};'.format(ipv6=host.ipv6))
             # curly brackets doubled for python format function
             return """host {fqdn} {{
         hardware ethernet {mac};
@@ -100,7 +100,7 @@ class DhcpOutput:
         }}""".format(
             fqdn=host.fqdn, 
             mac=host.mac, 
-            ip='\n'.join(ipstrings), 
+            ip='\n        '.join(ipstrings), 
             hostname=host.hostname, 
             domain=host.domain
         )

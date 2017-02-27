@@ -15,17 +15,16 @@ class Host:
     Representation of one host with several properties
     """
 
-    def __init__(self, hostname: str, ip: str="", ipv6: str="", is_nonunique: bool=False) -> None:
+    def __init__(self, inputhostname: str, ip: str="", ipv6: str="", is_nonunique: bool=False) -> None:
         self._set_defaults()
         if ip:
             self.ip = ipaddress.ip_address(ip)
         else:
-            logging.warning('host without ipv4: ' + hostname)
+            logging.warning('host without ipv4: ' + inputhostname)
         if ipv6:
             self.ipv6 = ipaddress.ip_address(ipv6)
-        self.hostname = hostname
         self.vars['unique'] = not is_nonunique
-        self._set_fqdn()
+        self._set_fqdn(inputhostname)
         self._set_publicip()
 
     def _set_defaults(self):
@@ -40,16 +39,16 @@ class Host:
         self.header = None  # stores header of input file
         self.groups = set(Config.get('groups', []))  # type: set
 
-    def _set_fqdn(self):
-        if self.hostname.endswith(Config["domain"]):
-            dot_parts = self.hostname.split('.')
-            self.prefix = dot_parts[0]  # type: str
+    def _set_fqdn(self, inputhostname: str):
+        if inputhostname.endswith(Config["domain"]):
+            dot_parts = inputhostname.split('.')
+            self.hostname = dot_parts[0]  # type: str
             self.domain = '.'.join(dot_parts[1:])  # type: str
-            self.fqdn = self.hostname  # type: str
+            self.fqdn = inputhostname  # type: str
         else:
-            self.prefix = self.hostname  # type: str
+            self.hostname = inputhostname  # type: str
             self.domain = self.get_domain(self.vars['institute'])  # type: str
-            self.fqdn = self.hostname + '.' + self.domain  # type: str
+            self.fqdn = inputhostname + '.' + self.domain  # type: str
 
     def _set_publicip(self):
         if self.ip and self.ip in ipaddress.ip_network(Config["iprange"]["external"]) or \
@@ -104,10 +103,10 @@ class Host:
     @property
     def aliases(self) -> List[str]:
         "Generate hostname aliases for DNS"
-        if self.prefix.startswith(self.vars['institute']):
-            return [self.fqdn, self.prefix, self.prefix[len(self.vars['institute']):]]
+        if self.hostname.startswith(self.vars['institute']):
+            return [self.fqdn, self.hostname, self.hostname[len(self.vars['institute']):]]
         else:
-            return [self.fqdn, self.prefix]
+            return [self.fqdn, self.hostname]
 
 
 class YMLHost(Host):
@@ -144,10 +143,10 @@ class YMLHost(Host):
 
         if 'hostname' not in self.vars:
             raise Exception("Entry without hostname.")
-        self.hostname = self.vars['hostname']
+        self._set_fqdn(self.vars['hostname'])
 
         if not self.vars['institute']:
-            raise Exception("No institute given for %s." % self.hostname)
+            raise Exception("No institute given for %s." % self.vars['hostname'])
         self.groups.update({
             self.vars['hosttype'],
             self.vars['institute'],
@@ -155,9 +154,8 @@ class YMLHost(Host):
         })
 
         self._check_macip()
-
-        self._set_fqdn()
         self._set_publicip()
+
         if header and 'iprange' in header:
             self._check_iprange(header['iprange'])
         self.header = header
@@ -169,20 +167,20 @@ class YMLHost(Host):
             assert self.IPREGEXP.match(self.vars['ip'])
             self.ip = ipaddress.IPv4Address(self.vars['ip'])
         except:
-            raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.vars['ip']))
+            raise Exception("Host %s does not have a valid IP address (%s)." % (self.fqdn, self.vars['ip']))
         try:
             if 'ipv6' in self.vars:
                 self.ipv6 = ipaddress.IPv6Address(self.vars['ipv6'])
             elif 'ipv6' in self.groups:
                 self.ipv6 = ipaddress.IPv6Address(Config['ipv6_prefix'] + self.vars['ip'])
         except:
-            raise Exception("Host %s does not have a valid IPv6 address (%s)." % (self.hostname, self.vars['ipv6']))
+            raise Exception("Host %s does not have a valid IPv6 address (%s)." % (self.fqdn, self.vars['ipv6']))
         if 'mac' in self.vars:
             try:
                 assert self.MACREGEXP.match(self.vars['mac'])
                 self.mac = MAC(self.vars['mac'])
             except:
-                raise Exception("Host %s does not have a valid MAC address (%s)." % (self.hostname, self.mac))
+                raise Exception("Host %s does not have a valid MAC address (%s)." % (self.fqdn, self.mac))
 
     def _check_iprange(self, iprange):
         "Check whether the given IP is in the range defined at the file header."
@@ -205,10 +203,10 @@ class YMLHost(Host):
         if 'end_date' in self.vars:
             end_date = self.vars['end_date']
             if not isinstance(end_date, datetime.date):
-                logging.error("Parsing of end_date %s led to non-date datatype %s for host %s." % (end_date, end_date.__class__, self.hostname))
+                logging.error("Parsing of end_date %s led to non-date datatype %s for host %s." % (end_date, end_date.__class__, self.fqdn))
                 return False
             if end_date < datetime.date.today():
-                logging.error("Host end_date in the past for host %s." % self.hostname)
+                logging.error("Host end_date in the past for host %s." % self.fqdn)
                 return False
         return True
 
@@ -218,13 +216,13 @@ class YMLHost(Host):
             try:
                 subprocess.check_output(['id', self.vars['user']])
             except subprocess.CalledProcessError:
-                logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.hostname))
+                logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.fqdn))
                 # return False
         return True
 
-    def filter(self, filter):
-        assert filter.__class__ == list
-        return self.hostname in filter or any([g in filter for g in self.groups])
+    def select(self, selectors: list) -> bool:
+        "return whether the host matches the given list of selectors"
+        return bool(set(selectors) & set.union(set(self.groups), set(self.aliases)))
 
 
 class MAC(str):

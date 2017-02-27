@@ -128,24 +128,26 @@ class YMLHostlist(Hostlist):
                 self.groups[group].append(newhost)
 
     def _fix_docker_ports(self):
-        for h in self:
-            if 'docker' in h.vars and 'ports' in h.vars['docker']:
+        "Add ip: prefix to port statements in docker"
+        for thish in self:
+            if 'docker' in thish.vars and 'ports' in thish.vars['docker']:
                 # prefix docker ports with container IP
-                h.vars['docker']['ports'] = [
-                    str(h.ip) + ':' + port for port in h.vars['docker']['ports']
+                thish.vars['docker']['ports'] = [
+                    str(thish.ip) + ':' + port for port in thish.vars['docker']['ports']
                 ]
 
-    def print(self, filter):
-        filtered = [h for h in self if h.filter(filter)]
-        for h in filtered:
+    def print(self, selectors):
+        "print all hosts matching the selectors"
+        for thish in filter(lambda h: h.select(selectors), self):
             if logging.getLogger().level == logging.DEBUG:
-                print(h.output(printgroups=True, printallvars=True))
+                print(thish.output(printgroups=True, printallvars=True))
             elif logging.getLogger().level == logging.INFO:
-                print(h.output(delim='\t', printgroups=True))
+                print(thish.output(delim='\t', printgroups=True))
             else:
-                print(h.hostname)
+                print(thish.hostname)
 
     def check_consistency(self, cnames):
+        "run all consistency checks"
         checks = [
             self.check_nonunique(),
             self.check_cnames(cnames),

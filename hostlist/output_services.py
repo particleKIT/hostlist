@@ -15,7 +15,7 @@ class Ssh_Known_HostsOutput:
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         # only scan keys on hosts that are in ansible
-        scan_hosts = filter(lambda h: 'ssh_known_hosts' in h.groups, hostlist)
+        scan_hosts = selectors(lambda h: 'ssh_known_hosts' in h.groups, hostlist)
 
         aliases = []
         for host in scan_hosts:

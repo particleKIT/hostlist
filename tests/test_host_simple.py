@@ -16,7 +16,8 @@ class TestSimpleHost():
         )
 
     def testOutput(self):
-        assert self.host.hostname == 'host1.abc.example.com'
+        assert self.host.fqdn == 'host1.abc.example.com'
+        assert self.host.hostname == 'host1'
         assert self.host.mac == host.MAC('00:12:34:ab:cd:ef')
         assert self.host.ip == ipaddress.ip_address('198.51.100.2')
         assert self.host.aliases == ['host1.abc.example.com', 'host1']

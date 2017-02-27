@@ -208,7 +208,7 @@ class YMLHostlist(Hostlist):
 
         success = True
         inverselist = {}
-        tocheck_props = ['ip', 'mac', 'hostname']
+        tocheck_props = ['ip', 'mac', 'fqdn']
         for prop in tocheck_props:
             inverselist[prop] = {}
             for h in self:

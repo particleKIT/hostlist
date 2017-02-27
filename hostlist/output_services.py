@@ -15,9 +15,9 @@ class Ssh_Known_HostsOutput:
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         # only scan keys on hosts that are in ansible
-        scan_hosts = selectors(lambda h: 'ssh_known_hosts' in h.groups, hostlist)
+        scan_hosts = filter(lambda h: 'ssh_known_hosts' in h.groups, hostlist)
 
-        aliases = []
+        aliases = []  # type: list
         for host in scan_hosts:
             if host.ip:
                 aliases += host.aliases
@@ -97,13 +97,11 @@ class DhcpOutput:
         {ip}
         option host-name "{hostname}";
         option domain-name "{domain}";
-        }}""".format(
-            fqdn=host.fqdn, 
-            mac=host.mac, 
-            ip='\n        '.join(ipstrings), 
-            hostname=host.hostname, 
-            domain=host.domain
-        )
+        }}""".format(fqdn=host.fqdn,
+                     mac=host.mac,
+                     ip='\n        '.join(ipstrings),
+                     hostname=host.hostname,
+                     domain=host.domain)
 
 
 class AnsibleOutput:

@@ -69,8 +69,19 @@ are deployed:
 * IP, MAC and hostname must be unique
 * if ``user`` is set, it must be an existing user account (to detect machines
   belonging to users who no longer have an account)
-* if ``end_date`` is set, it must be in the future
-
+* if ``end_date`` is set, it must be in the future  
+  
+To ignore failed tests list them in the ``ignore_checks`` list in your ``config.yml``:
+```yaml
+ignore_checks:
+    - "end_date"
+    - "user"
+    - "nonunique"
+    - "cnames"
+    - "duplicates"
+    - "missing_mac_ip"
+    - "iprange_overlap"
+``` 
 
 Services
 --------

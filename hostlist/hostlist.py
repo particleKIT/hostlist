@@ -136,20 +136,25 @@ class YMLHostlist(Hostlist):
                 print(h.hostname)
 
     def check_consistency(self, cnames):
-        checks = [
-            self.check_nonunique(),
-            self.check_cnames(cnames),
-            self.check_duplicates(),
-            self.check_missing_mac_ip(),
-            all(h.run_checks() for h in self),
-        ]
+        checks = {
+                'nonunique': self.check_nonunique(),
+                'cnames': self.check_cnames(cnames),
+                'duplicates': self.check_duplicates(),
+                'missing_mac_ip': self.check_missing_mac_ip(),
+                }
+        for h in self:
+            for hcheck,hstatus in h.run_checks().items():
+                if not hstatus:
+                    checks.update({hcheck:hstatus})
 
         if isinstance(self, YMLHostlist):
-            checks.append(self.check_iprange_overlap())
+            checks.update({'iprange_overlap': self.check_iprange_overlap()})
 
         logging.info("consistency check finished")
-        if not all(checks):
-            sys.exit(1)
+        for check,status in checks.items():
+            if not status and not ('ignore_checks' in Config and
+                        check in Config["ignore_checks"]):
+                sys.exit(1)
 
     def check_nonunique(self):
         """ensure nonunique flag agrees with nonunique_ips config"""

@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.3.2
+
+### Added
+* config var to ignore failed checks
+
 ## 1.3.0
 
 ### Added

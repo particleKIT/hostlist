@@ -180,11 +180,11 @@ class YMLHost(Host):
                             (self.fqdn, self.ip, iprange[0], iprange[1]))
 
     def run_checks(self) -> bool:
-        checks = [
-            self._check_user(),
-            self._check_end_date(),
-        ]
-        return all(checks)
+        checks = {
+                'user':  self._check_user(),
+                'end_date': self._check_end_date()
+                }
+        return checks
 
     def _check_end_date(self):
         "Check that end_date is not over yet"
@@ -205,7 +205,7 @@ class YMLHost(Host):
                 subprocess.check_output(['id', self.vars['user']])
             except subprocess.CalledProcessError:
                 logging.error("User %s does not exist and is listed for host %s." % (self.vars['user'], self.hostname))
-                # return False
+                return False
         return True
 
     def filter(self, filter):

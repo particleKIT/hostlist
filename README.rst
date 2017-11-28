@@ -95,11 +95,24 @@ At the moment the supported services are:
 * ssh_known_hosts generation
 
 
-Web daemon
-----------
+Web daemon ( ansible-cmdb)
+--------------------------
 
-You can start ``hostlist-daemon`` to serve the generated content via http. Start ``hostlist-daemon`` where you would run ``buildfiles``.
-The daemon is based on cherrypy and has a config file daemon.conf. 
+You can start ``hostlist-daemon`` to serve the with [ansible-cmdb](https://github.com/fboender/ansible-cmdb) generated content via http. Start ``hostlist-daemon`` where you would run ``buildfiles``. Optional settings for ansible-cmd are:
+```yaml
+ansible_cmdb:
+  columns:
+    - name
+    - ram
+    - comment
+    - main_ip
+  template: 'fancy_html'
+  data: 
+  fact_dirs:
+    - facts
+```
+which can be tested by viewing the output of ``buildfiles --web > index.html`` in a web browser. Note that if you want to see various host variables you must add the to the ``ansiblevars`` dict in the config.yml in order to have them in the ansible inventory.
+The web daemon is based on cherrypy and has a config file daemon.conf.
 
 
 Example

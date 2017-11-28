@@ -2,6 +2,10 @@
 
 from collections import defaultdict
 import os
+import logging
+import ansiblecmdb
+import ansiblecmdb.render as render
+import json
 
 from .host import Host
 from .hostlist import Hostlist
@@ -96,9 +100,12 @@ class DhcpOutput:
 
 class AnsibleOutput:
     "Ansible inventory output"
-
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> dict:
+        return cls._gen_inventory(hostlist, cnames)
+
+    @classmethod
+    def _gen_inventory(cls, hostlist: Hostlist, cnames: CNamelist) -> dict:
         """generate json inventory for ansible
         form:
             {
@@ -161,6 +168,40 @@ class AnsibleOutput:
                 result['vars'][avar] = host.vars[avar]
         return result
 
+class WebOutput(AnsibleOutput):
+    "Use ansible-cmdb to create webpages from inventory"
+    @classmethod
+    def gen_content(cls, hostlist, cnames):
+        conf = Config.get('ansible_cmdb', {})
+        data_dir = conf.get('data_dir', '/usr/lib/ansiblecmdb/data')
+        tpl_dir = os.path.join(data_dir, 'tpl')
+        tpl = conf.get('template', 'html_fancy')
+        cols = conf.get('columns', None)
+        cols_excl = conf.get('columns_exclude', None)
+        fact_dirs = conf.get('fact_dirs', [])
+
+        # generate ansible inventory
+        json_inventory = json.dumps(cls._gen_inventory(hostlist,cnames),indent=2)
+        # use cmdb parser to parse it
+        inventory_parsed = ansiblecmdb.DynInvParser(json_inventory)
+        # add hosts to cmdb 'database', also load previously generated facts
+        cmdb = ansiblecmdb.Ansible(fact_dirs=fact_dirs)
+        for host,hostvars in inventory_parsed.hosts.items():
+            cmdb.update_host(host,hostvars)
+        for fact_dir in fact_dirs:
+            cmdb._parse_fact_dir(fact_dir, fact_cache=True)
+        # run the cmdb render
+        renderer = render.Render(tpl, ['.', tpl_dir])
+        params = {
+            'lib_dir': data_dir,
+            'data_dir': data_dir,
+            'version': '',
+            'log': logging.getLogger(),
+            'columns': cols,
+            'exclude_columns': cols_excl
+        }
+        out = renderer.render(cmdb.hosts, params)
+        return out.decode('utf8')
 
 class EthersOutput:
     "/etc/ethers format output"
@@ -175,24 +216,3 @@ class EthersOutput:
         )
         out = '\n'.join(entries)
         return out
-
-
-class WebOutput:
-    "HTML Table of hosts"
-
-    @classmethod
-    def gen_content(cls, hostlist, cnames):
-        if os.path.exists('header.html'):
-            with open('header.html') as file:
-                header = file.read()
-        else:
-            header = '<html><body>'
-
-        fields = Config.get('weboutput_columns', ['institute', 'hosttype', 'hostname'])
-        thead = '<table><thead><tr><th>' + '</th><th>'.join(fields) + '</th></tr></thead>\n'
-        footer = '</table></body></html>'
-        hostlist = '\n'.join(
-            '<tr><td>' + '</td><td>'.join(str(h.vars.get(field, '')) for field in fields) + '</td></tr>'
-            for h in hostlist
-        )
-        return header + thead + hostlist + footer

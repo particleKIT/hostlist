@@ -95,10 +95,12 @@ At the moment the supported services are:
 * ssh_known_hosts generation
 
 
-Web daemon ( ansible-cmdb)
---------------------------
+Web daemon
+----------
 
-You can start ``hostlist-daemon`` to serve the with [ansible-cmdb](https://github.com/fboender/ansible-cmdb) generated content via http. Start ``hostlist-daemon`` where you would run ``buildfiles``. Optional settings for ansible-cmd are:
+You can start ``hostlist-daemon`` to serve the generated content (dns,dhcp,munin,...) via http. Start ``hostlist-daemon`` where you would run ``buildfiles``. The web daemon is based on cherrypy and has a config file daemon.conf.
+  
+In addition there is a human readable web page generated with [ansible-cmdb](https://github.com/fboender/ansible-cmdb). Optional settings for ansible-cmd are:
 ```yaml
 ansible_cmdb:
   columns:
@@ -111,8 +113,10 @@ ansible_cmdb:
   fact_dirs:
     - facts
 ```
-which can be tested by viewing the output of ``buildfiles --web > index.html`` in a web browser. Note that if you want to see various host variables you must add the to the ``ansiblevars`` dict in the config.yml in order to have them in the ansible inventory.
-The web daemon is based on cherrypy and has a config file daemon.conf.
+  
+which can be tested by viewing the output of ``buildfiles --web > index.html`` in a web browser. 
+Note that if you want to have various host variables listed you must add them to the ``ansiblevars`` dict in the config.yml in order to have them in the ansible inventory. 
+Since buildfiles does not execute ansible on any remote host, there are no host facts (ram,cpu,vendors,disk usage...) available. However, one can supply these informations via fact caching from previous ansible runs via the directories listed in ``fact_dirs`` (see the ansible-cmdb documentation).
 
 
 Example

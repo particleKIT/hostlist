@@ -96,6 +96,7 @@ class DhcpOutput:
         option host-name "{hostname}";
         option domain-name "{domain}";
         }}""".format(fqdn=host.fqdn, mac=host.mac, ip=host.ip, hostname=host.hostname, domain=host.domain)
+        return ""
 
 
 class AnsibleOutput:

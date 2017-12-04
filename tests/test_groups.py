@@ -2,8 +2,9 @@
 
 from hostlist import hostlist
 from hostlist import cnamelist
-from hostlist import output_services
+from hostlist.output_services import Output_Services
 from pprint import pprint
+import json
 
 
 class TestGroup():
@@ -26,8 +27,8 @@ class TestGroup():
         assert len(self.hosts.groups['superserver']) == 1
 
     def testansiblegroups(self):
-        ansout = output_services.AnsibleOutput().gen_content(self.hosts, self.cnames)
-        data = dict(ansout)
+        ansout = Output_Services['ansible'](self.hosts, self.cnames)
+        data = json.loads(ansout)
         pprint(data)
         assert data['_meta']['hostvars']['host4.abc.example.com']['ip'] == '198.51.100.4'
         assert data['server']['hosts'] == ['serv1.abc.example.com', 'serv2.abc.example.com']

@@ -6,7 +6,6 @@ import logging
 import types
 from distutils.util import strtobool
 import sys
-import json
 from typing import List
 
 from . import hostlist

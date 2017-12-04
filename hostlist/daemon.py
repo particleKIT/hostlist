@@ -59,9 +59,18 @@ class Inventory():
     def index(self, service='index'):
         if service != 'index':
             return Output_Services[service](self.hostlist, self.cnames)
-        out = 'Available hostlists:<br>'
-        out += ''.join(list(map(lambda s: '<a href="/{0}">{0}</a><br>'.format(s), Output_Services.keys())))
-        out += 'See <a href="https://github.com/particleKIT/hostlist">github.com/particleKIT/hostlist</a> how to use this API.'
+        servicelist = sorted(list(Output_Services.keys()))
+        branch = self.repo.active_branch
+        out = 'Last update: ' + str(self.last_update)
+        out += '<br>Repository:<br> Branch:{0}<br>Commit:{1} <b>{2}</b> ({3})<br><br>'.format(
+                str(branch),
+                str(branch.commit),
+                str(branch.commit.summary),
+                str(branch.commit.author)
+                )
+        out += 'Available hostlists:<br>'
+        out += ''.join(list(map(lambda s: '<a href="/{0}">{0}</a><br>'.format(s), servicelist)))
+        out += '<br><br><i>See <a href="https://github.com/particleKIT/hostlist">github.com/particleKIT/hostlist</a> how to use this API.</i>'
         return out
 
 

@@ -12,7 +12,7 @@ from .hostlist import Hostlist
 from .cnamelist import CNamelist
 from .config import CONFIGINSTANCE as Config
 
-Output_Services = {}
+Output_Services = {} # type: dict
 
 class Output_Register(type):
     def __new__(cls, clsname, bases, attrs):
@@ -113,11 +113,11 @@ class dhcp(Output):
 class ansible(Output):
     "Ansible inventory output"
     @classmethod
-    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> dict:
+    def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         return cls._gen_inventory(hostlist, cnames)
 
     @classmethod
-    def _gen_inventory(cls, hostlist: Hostlist, cnames: CNamelist) -> dict:
+    def _gen_inventory(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
         """generate json inventory for ansible
         form:
             {

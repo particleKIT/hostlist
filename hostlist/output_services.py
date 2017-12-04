@@ -12,8 +12,19 @@ from .hostlist import Hostlist
 from .cnamelist import CNamelist
 from .config import CONFIGINSTANCE as Config
 
+Output_Services = {}
 
-class Ssh_Known_HostsOutput:
+class Output_Register(type):
+    def __new__(cls, clsname, bases, attrs):
+        newcls = super(Output_Register, cls).__new__(cls, clsname, bases, attrs)
+        if hasattr(newcls, 'gen_content'):
+            Output_Services.update({clsname: newcls.gen_content})
+        return newcls
+
+class Output(metaclass=Output_Register):
+    pass
+
+class ssh_known_hosts(Output):
     "Generate hostlist for ssh-keyscan"
 
     @classmethod
@@ -37,7 +48,7 @@ class Ssh_Known_HostsOutput:
         return fcont
 
 
-class HostsOutput:
+class hosts(Output):
     "Config output for /etc/hosts format"
 
     @classmethod
@@ -47,7 +58,7 @@ class HostsOutput:
         return content
 
 
-class MuninOutput:
+class munin(Output):
     "Config output for Munin"
 
     @classmethod
@@ -73,7 +84,7 @@ class MuninOutput:
         return cont
 
 
-class DhcpOutput:
+class dhcp(Output):
     "DHCP config output"
 
     @classmethod
@@ -99,7 +110,7 @@ class DhcpOutput:
         return ""
 
 
-class AnsibleOutput:
+class ansible(Output):
     "Ansible inventory output"
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> dict:
@@ -149,7 +160,7 @@ class AnsibleOutput:
         if docker_services:
             resultdict['vserverhost']['vars'] = {'docker_services': docker_services}
 
-        return resultdict
+        return json.dumps(resultdict,indent=2)
 
     @staticmethod
     def _gen_host_content(host):
@@ -169,7 +180,7 @@ class AnsibleOutput:
                 result['vars'][avar] = host.vars[avar]
         return result
 
-class WebOutput(AnsibleOutput):
+class cmdb(ansible):
     "Use ansible-cmdb to create webpages from inventory"
     @classmethod
     def gen_content(cls, hostlist, cnames):
@@ -182,7 +193,7 @@ class WebOutput(AnsibleOutput):
         fact_dirs = conf.get('fact_dirs', [])
 
         # generate ansible inventory
-        json_inventory = json.dumps(cls._gen_inventory(hostlist,cnames),indent=2)
+        json_inventory = cls._gen_inventory(hostlist,cnames)
         # use cmdb parser to parse it
         inventory_parsed = ansiblecmdb.DynInvParser(json_inventory)
         # add hosts to cmdb 'database', also load previously generated facts
@@ -204,7 +215,7 @@ class WebOutput(AnsibleOutput):
         out = renderer.render(cmdb.hosts, params)
         return out.decode('utf8')
 
-class EthersOutput:
+class ethers(Output):
     "/etc/ethers format output"
 
     @classmethod

@@ -11,7 +11,7 @@ from typing import List
 
 from . import hostlist
 from . import cnamelist
-from . import output_services
+from .output_services import Output_Services
 from .config import CONFIGINSTANCE as Config
 try:
     from .dnsvs import sync
@@ -101,16 +101,15 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
 
 def run_service(service: str, file_hostlist: hostlist.Hostlist, file_cnames: cnamelist.CNamelist) -> None:
     "Run all services according to servicedict on hosts in file_hostlist."
-    outputcls = getattr(output_services, service.title() + "Output", None)
-    if outputcls:
+    if service in Output_Services.keys():
         logging.info("generating output for " + service)
-        out = outputcls.gen_content(file_hostlist, file_cnames)
+        out = Output_Services[service](file_hostlist, file_cnames)
         if isinstance(out, str):
             print(out)
         else:
-            print(json.dumps(out, indent=2))
+            logging.critical("Service " + service + " did not return a String.")
     else:
-        logging.critical("missing make function for " + service)
+        logging.critical("Service " + service + " not known.")
 
 
 def main():
@@ -118,8 +117,7 @@ def main():
 
     logging.basicConfig(format='%(levelname)s:%(message)s')
 
-    services = ['dhcp', 'dhcpinternal', 'hosts', 'munin',
-                'ssh_known_hosts', 'ansible', 'ethers', 'web']
+    services = Output_Services.keys()
     args = parse_args(services)
 
     # get a dict of the arguments

@@ -11,9 +11,8 @@ import cherrypy
 
 from . import hostlist
 from . import cnamelist
-from . import output_services
+from .output_services import Output_Services
 from .config import CONFIGINSTANCE as Config
-
 
 class Inventory():
 
@@ -41,42 +40,14 @@ class Inventory():
         self.cnames = cnamelist.FileCNamelist()
         print("Refreshed cache.")
 
-    @cherrypy.expose
-    @cherrypy.tools.json_out()
-    def ansible(self):
-        self.fetch_hostlist()
-        return output_services.AnsibleOutput.gen_content(self.hostlist, self.cnames)
-
-    @cherrypy.expose
-    def munin(self):
-        self.fetch_hostlist()
-        return output_services.MuninOutput.gen_content(self.hostlist, self.cnames)
-
-    @cherrypy.expose
-    def dhcp(self):
-        self.fetch_hostlist()
-        return output_services.DhcpOutput.gen_content(self.hostlist, self.cnames)
-
-    @cherrypy.expose
-    def hosts(self):
-        self.fetch_hostlist()
-        return output_services.HostsOutput.gen_content(self.hostlist, self.cnames)
-
-    @cherrypy.expose
-    def ethers(self):
-        self.fetch_hostlist()
-        return output_services.EthersOutput.gen_content(self.hostlist, self.cnames)
-
-    @cherrypy.expose
-    def list(self):
-        self.fetch_hostlist()
-        return output_services.WebOutput.gen_content(self.hostlist, self.cnames)
-
-    @cherrypy.expose
-    def status(self):
-        result = 'Have a hostlist with %s hosts and %s cnames.' % (len(self.hostlist), len(self.cnames))
-        result += '\nLast updated: %s' % self.last_update
-        return result
+    def _cp_dispatch(self,vpath):
+        if len(vpath) == 0:
+            cherrypy.request.params['service'] = "index"
+            return self
+        param = vpath.pop(0)
+        if param in Output_Services.keys():
+            cherrypy.request.params['service'] = param
+        return self
 
     @cherrypy.expose
     @cherrypy.config(**{'tools.caching.delay': 10})
@@ -85,8 +56,13 @@ class Inventory():
         self.fetch_hostlist(timeout=10)
 
     @cherrypy.expose
-    def index(self):
-        return 'See <a href="https://github.com/particleKIT/hostlist">github.com/particleKIT/hostlist</a> how to use this API.'
+    def index(self, service='index'):
+        if service != 'index':
+            return Output_Services[service](self.hostlist, self.cnames)
+        out = 'Available hostlists:<br>'
+        out += ''.join(list(map(lambda s: '<a href="/{0}">{0}</a><br>'.format(s), Output_Services.keys())))
+        out += 'See <a href="https://github.com/particleKIT/hostlist">github.com/particleKIT/hostlist</a> how to use this API.'
+        return out
 
 
 def _auth_config(app):

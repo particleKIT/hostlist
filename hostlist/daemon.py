@@ -48,7 +48,7 @@ class Inventory():
             cherrypy.request.params['service'] = "index"
             return self
         param = vpath.pop(0)
-        if param in Output_Services.keys():
+        if param in Output_Services:
             cherrypy.request.params['service'] = param
         return self
 

@@ -100,7 +100,7 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
 
 def run_service(service: str, file_hostlist: hostlist.Hostlist, file_cnames: cnamelist.CNamelist) -> None:
     "Run all services according to servicedict on hosts in file_hostlist."
-    if service in Output_Services.keys():
+    if service in Output_Services:
         logging.info("generating output for " + service)
         out = Output_Services[service](file_hostlist, file_cnames)
         if isinstance(out, str):

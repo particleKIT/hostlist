@@ -5,9 +5,9 @@
 # import sys
 
 import git
-import logging
 import datetime
 import cherrypy
+from cherrypy import log
 
 from . import hostlist
 from . import cnamelist
@@ -23,6 +23,7 @@ class Inventory():
             self.repo = git.Repo('../')
         self.last_update = None
         self.fetch_hostlist()
+        self.pull_failed = False
 
     def fetch_hostlist(self, timeout=600):
         if self.last_update and datetime.datetime.now() - self.last_update < datetime.timedelta(seconds=timeout):
@@ -32,9 +33,11 @@ class Inventory():
         try:
             pullresult = self.repo.remote().pull()[-1]
             if not pullresult.flags & pullresult.HEAD_UPTODATE:
-                logging.error("Hosts repo not up to date after pull.")
+                self.pull_failed = True
+                log("Hosts repo not up to date after pull.")
         except:
-            logging.error("Failed to pull hosts repo.")
+            log("Failed to pull hosts repo.")
+            self.pull_failed = True
         Config.load()
         self.hostlist = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()
@@ -62,7 +65,8 @@ class Inventory():
         servicelist = sorted(list(Output_Services.keys()))
         branch = self.repo.active_branch
         out = 'Last update: ' + str(self.last_update)
-        out += '<br>Repository:<br> Branch:{0}<br>Commit:{1} <b>{2}</b> ({3})<br><br>'.format(
+        out += ' <b>(failed)</b><br>' if self.pull_failed else '<br>'
+        out += 'Branch:{0}<br>Commit:{1} <b>{2}</b> ({3})<br><br>'.format(
                 str(branch),
                 str(branch.commit),
                 str(branch.commit.summary),

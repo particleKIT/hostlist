@@ -4,3 +4,4 @@ termcolor
 requests
 cherrypy
 GitPython
+ansible-cmdb

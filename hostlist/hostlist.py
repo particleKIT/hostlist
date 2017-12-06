@@ -11,7 +11,7 @@ import glob
 import yaml
 from typing import Dict, Tuple
 try:
-    from yaml import CSafeLoader as SafeLoader
+    from yaml import CSafeLoader as SafeLoader # type: ignore
 except ImportError:
     from yaml import SafeLoader
 

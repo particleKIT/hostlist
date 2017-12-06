@@ -31,7 +31,7 @@ class DNSVSInterface:
             if method == "get":
                 response = requests.get(url=url, headers=self.headers_dict, cert=self.certfilename)
             elif method == "post":
-                response = requests.post(url=url, data=data, headers=self.headers_dict, cert=self.certfilename)
+                response = requests.post(url=url, data=data, headers=self.headers_dict, cert=self.certfilename) # type: ignore
             if response.ok:
                 return response.json()
             else:

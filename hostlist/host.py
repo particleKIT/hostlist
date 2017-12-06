@@ -179,7 +179,7 @@ class YMLHost(Host):
             raise Exception("%s has IP %s outside of range %s-%s." %
                             (self.fqdn, self.ip, iprange[0], iprange[1]))
 
-    def run_checks(self) -> bool:
+    def run_checks(self) -> dict:
         checks = {
                 'user':  self._check_user(),
                 'end_date': self._check_end_date()

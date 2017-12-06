@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.4.0
+
+### Added
+* improved web-overview for available services
+* web-hostlist no based on ansible-cmdb: https://github.com/fboender/ansible-cmdb
+
 ## 1.3.2
 
 ### Added

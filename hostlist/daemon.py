@@ -41,6 +41,7 @@ class Inventory():
         Config.load()
         self.hostlist = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()
+        self.pull_failed = False
         print("Refreshed cache.")
 
     def _cp_dispatch(self,vpath):

@@ -19,9 +19,9 @@ class DNSVSInterface:
     createurl = root_url + '/record/create'
     deleteurl = root_url + '/record/delete'
     # all our entries ar IPv4
-    inttype_a = "host:0100,:,402,A"
-    inttype_nonunique = "domain:1000,:,400,A"
-    inttype_cname = "alias:0000,host:0100,011,CNAME"
+    inttype_a = "dflt:0100,:,402,A"
+    inttype_nonunique = "dflt:1100,:,400,A"
+    inttype_cname = "alias:0000,dflt:0100,011,CNAME"
 
     headers_dict = {"Content-Type": "application/json"}
 

@@ -13,7 +13,7 @@ from typing import Dict, Tuple
 try:
     from yaml import CSafeLoader as SafeLoader # type: ignore
 except ImportError:
-    from yaml import SafeLoader
+    from yaml import SafeLoader # type: ignore
 
 from . import host
 from .config import CONFIGINSTANCE as Config

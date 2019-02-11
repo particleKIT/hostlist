@@ -12,7 +12,7 @@ from ..host import Host
 try:
     from termcolor import colored
 except ImportError:
-    def colored(text, _):
+    def colored(text, _): # type: ignore
         return text
 
 

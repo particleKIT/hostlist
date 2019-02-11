@@ -26,7 +26,7 @@ class Host:
     def _set_defaults(self):
         self.vars = {
             'unique': True,
-        }  # type: dict[str, any]
+        }  # type: Dict[str, Any] # noqa: F821
 
         self.ip = None  # type: Optional[ipaddress.ip_address]
         self.mac = None

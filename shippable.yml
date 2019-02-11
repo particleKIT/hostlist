@@ -14,7 +14,7 @@ build:
     - docker build -t hostlist:latest .
     - docker rm -f hostlist || true
   ci:
-    - flake8 hostlist --extend-ignore=E501,E221,E261,E302,E241,E231,E126,E203,E123,E226,E201,E202,E226,W503,E228,E128,E122,E251,E722
+    - flake8 hostlist --extend-ignore=E501,E221,E261,E302,E241,E231,E126,E203,E123,E226,E201,E202,E226,W503,E228,E128,E122,E251,E252,E722
     - mypy --ignore-missing-imports --strict-optional hostlist
     # - pylint hostlist
     - flit wheel

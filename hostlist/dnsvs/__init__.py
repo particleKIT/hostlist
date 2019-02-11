@@ -14,12 +14,12 @@ class DNSVSInterface:
 
     certfilename = '~/.ssl/net-webapi.key'
     certfilename = os.path.expanduser(certfilename)
-    root_url = 'https://www-net.scc.kit.edu/api/2.0/dns'
+    root_url = 'https://www-net.scc.kit.edu/api/2.1/dns'
     geturl = root_url + '/record/list'
     createurl = root_url + '/record/create'
     deleteurl = root_url + '/record/delete'
     # all our entries ar IPv4
-    inttype_a = "dflt:0100,:,402,A"
+    inttype_a = "dflt:0100,:,403,A"
     inttype_nonunique = "dflt:1100,:,400,A"
     inttype_cname = "alias:0000,dflt:0100,011,CNAME"
 
@@ -102,12 +102,12 @@ class DNSVSInterface:
         inttype = self.inttype_nonunique if not host.vars['unique'] else self.inttype_a
         data = [
             {"param_list": [
-                {"name": "fqdn", "new_value": host.fqdn + "."},
-                {"name": "data", "new_value": str(host.ip)},
+                {"name": "fqdn", "new_value": host.fqdn },
                 {"name": "inttype", "new_value": inttype},
+                {"name": "data", "new_value": str(host.ip)}
             ]},
         ]
-        json_string = json.dumps(data)
+        json_string = json.dumps(data, ensure_ascii = False)
         self._execute(url=self.createurl, method="post", data=json_string)
 
     def remove_host(self, host: Host) -> None:

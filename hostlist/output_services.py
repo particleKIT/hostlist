@@ -189,6 +189,7 @@ class cmdb(ansible):
         tpl_dir = os.path.join(data_dir, 'tpl')
         tpl = conf.get('template', 'html_fancy')
         cols = conf.get('columns', None)
+        custom_cols = conf.get('custom_columns', [])
         cols_excl = conf.get('columns_exclude', None)
         fact_dirs = conf.get('fact_dirs', [])
 
@@ -210,6 +211,7 @@ class cmdb(ansible):
             'version': '',
             'log': logging.getLogger(),
             'columns': cols,
+            'cust_cols': custom_cols,
             'exclude_columns': cols_excl
         }
         out = renderer.render(cmdb.hosts, params)

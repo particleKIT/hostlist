@@ -1,12 +1,10 @@
-hostlist
-========
+# hostlist
 
 Hostlist reads yaml lists with information about hosts and generates
 config files and inventory for several services.
 
 
-Quickstart
-----------
+## Quickstart
 
 Example input files are in the ``tests`` directory. Hostlists are defined in the ``hostslists`` subdirectory, where the filename
 encodes the ``hosttype`` and ``institute`` attributes of the contained hosts.
@@ -14,15 +12,13 @@ encodes the ``hosttype`` and ``institute`` attributes of the contained hosts.
 Run ``buildfiles`` to generate the output.
 ``buildfiles --help`` shows the available options.
 
-Configuration
--------------
+## Configuration
 
 The main configuration is in ``config.yml`` in the working directory. 
 Hostlists are collected in a directory listed in ``config.yml``.
 
 
-Format of hostlists
--------------------
+## Format of hostlists
 
 The hostlists are files under ``hostlists``. The file format is either
 ``hosttype-institute.yml`` or ``hosttype.yml``, i.e. 0 or 1 dash. The filename will
@@ -38,8 +34,7 @@ the file. It can also set variables and groups.
 The hostlist is a list of dicts, which each need a hostname and an ip and can
 take other variables.
 
-Variables and Groups
---------------------
+## Variables and Groups
 
 Each host has a list of variables (dict) associated with it as well as a list of groups (set).
 
@@ -54,8 +49,7 @@ Groups are used to define which hosts are used in some outputs (muninnode, ssh_k
 checks (needs_ip, needs_mac).
 
 
-Checks
-------
+## Checks
 
 Many checks are performed to ensure consistency and find mistakes before they
 are deployed:
@@ -83,8 +77,7 @@ ignore_checks:
     - "iprange_overlap"
 ``` 
 
-Services
---------
+## Services
 
 At the moment the supported services are:
 
@@ -95,8 +88,7 @@ At the moment the supported services are:
 * ssh_known_hosts generation
 
 
-Web daemon
-----------
+## Web daemon
 
 You can start ``hostlist-daemon`` to serve the generated content (dns,dhcp,munin,...) via http. Start ``hostlist-daemon`` where you would run ``buildfiles``. The web daemon is based on cherrypy and has a config file daemon.conf.
   
@@ -119,14 +111,12 @@ Note that if you want to have various host variables listed you must add them to
 Since buildfiles does not execute ansible on any remote host, there are no host facts (ram,cpu,vendors,disk usage...) available. However, one can supply these informations via fact caching from previous ansible runs via the directories listed in ``fact_dirs`` (see the ansible-cmdb documentation).
 
 
-Example
--------
+## Example
 
 A working example for inputs and all configuration files can be found in ``tests``.
 
 
-DNSVS Synchronization
----------------------
+## DNSVS Synchronization
 
 Besides generating config files, the hostlist can also be synchronized against
 DNSVS, which is the dns management system used by https://www.scc.kit.edu.
@@ -138,19 +128,16 @@ diff between dnsvs and the local files and gives the option to copy the local
 hostlist to dnsvs.
 
 
-Tests
------
+## Tests
 To run the tests:
 ::
 
   cd tests; py.test
 
-Contribute
-----------
+## Contribute
 Feel free to use the code and adjust it to your needs.
 Pull requests are welcome!
 
-Style guide
------------
+## Style guide
 
 The code should obey PEP8 (as enforced by flake8 or pylint) when possible.

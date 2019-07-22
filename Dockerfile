@@ -3,7 +3,7 @@ MAINTAINER robin.roth@kit.edu
 
 RUN apk add --no-cache bash git openssh
 
-COPY flit.ini requirements.txt README.rst /hostlist/
+COPY flit.ini requirements.txt README.md /hostlist/
 COPY hostlist /hostlist/hostlist
 COPY tests /hostlist/tests
 

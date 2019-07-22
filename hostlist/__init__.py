@@ -3,7 +3,7 @@
 
 from . import buildfiles
 
-__version__ = '1.4.2'
+__version__ = '1.4.3'
 
 if __name__ == "__main__":
     buildfiles.main()

@@ -151,7 +151,7 @@ class ansible(Output):
                 resultdict[groupname]['hosts'] += [ans['fqdn']]
 
             if ans['vars']['hosttype'] == 'docker':
-                resultdict['dockerhost-' + host.hostname]['hosts'] += [ans['vars']['docker']['host']]
+                resultdict['dockerhost_' + host.hostname]['hosts'] += [ans['vars']['docker']['host']]
                 docker_services[host.hostname] = ans['vars']['docker']
                 docker_services[host.hostname]['fqdn'] = host.fqdn
                 docker_services[host.hostname]['ip'] = str(host.ip)

@@ -132,7 +132,6 @@ class YMLHost(Host):
         for var, value in inputdata.items():
             self.vars[var] = value
         self.groups.update(inputdata.get('groups', {}))
-        self.groups.difference_update(inputdata.get('notgroups', {}))
 
         if 'hostname' not in self.vars:
             raise Exception("Entry without hostname.")
@@ -145,6 +144,7 @@ class YMLHost(Host):
             self.vars['institute'],
             self.vars['institute'] + self.vars['hosttype']
         })
+        self.groups.difference_update(inputdata.get('notgroups', {}))
 
         self._check_macip()
 

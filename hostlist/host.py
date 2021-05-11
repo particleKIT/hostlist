@@ -210,7 +210,9 @@ class YMLHost(Host):
 
     def filter(self, filter):
         assert filter.__class__ == list
-        return self.hostname in filter or any([g in filter for g in self.groups])
+        included = self.hostname in filter or any([g in filter for g in self.groups])
+        excluded = "!" + self.hostname in filter or any(["!" + g in filter for g in self.groups])
+        return included and not excluded
 
 
 class MAC(str):

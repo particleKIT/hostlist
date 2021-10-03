@@ -121,9 +121,9 @@ A working example for inputs and all configuration files can be found in ``tests
 Besides generating config files, the hostlist can also be synchronized against
 DNSVS, which is the dns management system used by https://www.scc.kit.edu.
 
-In order to use the DNSVS interface you need a ssl-key, which is expected in ~/.ssl/net-webapi.key. In order to generate the key, follow the instructions in the section "Hinweise zur Zertifikatsbenutzung bzw. Registrierung" at the bottom of the page https://www-net-doku.scc.kit.edu/webapi/2.0/intro.
+In order to use the DNSVS interface you need an API token , which is expected in ~/.config/netdb_client.ini. In order to generate the token, log-in/got-to https://netvs.scc.kit.edu/user/tokens.
 
-With the key added, you can run ``buildfiles``, which shows you a
+With the token-file added, you can run ``buildfiles``, which shows you a
 diff between dnsvs and the local files and gives the option to copy the local
 hostlist to dnsvs.
 

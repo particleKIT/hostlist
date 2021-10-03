@@ -79,23 +79,31 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
     except Exception as exc:
         logging.error(exc)
         logging.error("Failed to connect to DNSVS."
-                      " Please make sure you have a valid ssl key,"
+                      " Please make sure you have a valid token,"
                       " cf. Readme.md.")
         logging.error("Not syncing with DNSVS.")
-    else:
-        dnsvs_diff = file_hostlist.diff(dnsvs_hostlist)
-        dnsvs_cnames_diff = file_cnames.diff(dnsvs_cnames)
-        total_diff = combine_diffs(dnsvs_diff, dnsvs_cnames_diff)
-        if total_diff.empty:
-            logging.info("DNSVS and local files agree, nothing to do")
-        else:
-            sync.print_diff(total_diff)
+        return
 
-        if not dryrun and not total_diff.empty:
-            print("Do you want to apply this patch to dnsvs? (y/n)")
-            choice = input().lower()
-            if choice != '' and strtobool(choice):
-                sync.apply_diff(total_diff)
+    dnsvs_diff = file_hostlist.diff(dnsvs_hostlist)
+    dnsvs_cnames_diff = file_cnames.diff(dnsvs_cnames)
+    total_diff = combine_diffs(dnsvs_diff, dnsvs_cnames_diff)
+    if total_diff.empty:
+        logging.info("DNSVS and local files agree, nothing to do")
+    else:
+        sync.print_diff(total_diff)
+
+    if not dnsvs_hostlist:
+        logging.error("ATTENTION: upstream DNS hostlist is empty!"
+                      "This is likely because you used a token which does not"
+                      "belong to a subgrop with sufficient permissions."
+                      "Please add your account to a subgroup with access to your BCD!")
+        return
+
+    if not dryrun and not total_diff.empty:
+        print("Do you want to apply this patch to dnsvs? (y/n)")
+        choice = input().lower()
+        if choice != '' and strtobool(choice):
+            sync.apply_diff(total_diff)
 
 
 def run_service(service: str, file_hostlist: hostlist.Hostlist, file_cnames: cnamelist.CNamelist) -> None:

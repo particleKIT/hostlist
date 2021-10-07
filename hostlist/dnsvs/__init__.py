@@ -11,11 +11,15 @@ from ..cnamelist import CName
 
 class DNSVSInterface:
 
-    configfile = os.path.expanduser('~/.config/netdb_client.ini')
-    config = ConfigParser()
-    config.read(configfile)
-    token = config['prod']['token']
-
+    try:
+        configfile = os.path.expanduser('~/.config/netdb_client.ini')
+        config = ConfigParser()
+        config.read(configfile)
+        token = config['prod']['token']
+    except KeyError:
+        logging.error("No token file found. Also make sure that "
+                      "a [prod] section with a 'token = value' assignment exists.")
+        token = ''
     root_url = 'https://www-net.scc.kit.edu/api/3.0/dns'
     geturl = root_url + '/record/list'
     createurl = root_url + '/record/create'
@@ -33,8 +37,6 @@ class DNSVSInterface:
             if response.ok:
                 return response.json()
             else:
-                from IPython import embed
-                embed()
                 raise requests.exceptions.RequestException(response.status_code, response.text)
         except Exception as e:
             logging.error(str(e))

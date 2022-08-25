@@ -20,7 +20,7 @@ class DNSVSInterface:
         logging.error("No token file found. Also make sure that "
                       "a [prod] section with a 'token = value' assignment exists.")
         token = ''
-    root_url = 'https://www-net.scc.kit.edu/api/3.0/dns'
+    root_url = 'https://www-net.scc.kit.edu/api/3.2/dns'
     geturl = root_url + '/record/list'
     createurl = root_url + '/record/create'
     deleteurl = root_url + '/record/delete'
@@ -105,7 +105,7 @@ class DNSVSInterface:
                 "data": str(host.ip),
                 "fqdn": host.fqdn + '.',
                 "type": 'A',
-                "fqdn_type": 'host',
+                "fqdn_type": 'domain',
                 "target_is_reverse_unique": host.vars['unique']
                 }
         }

@@ -1,4 +1,4 @@
-FROM python:alpine
+FROM python:3.10-alpine
 MAINTAINER robin.roth@kit.edu
 
 RUN apk add --no-cache bash git openssh

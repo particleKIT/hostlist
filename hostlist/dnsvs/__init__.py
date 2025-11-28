@@ -4,10 +4,14 @@ import requests
 import json
 import os.path
 import logging
+import urllib.parse
 from typing import Optional, Dict, Tuple, List
 from configparser import ConfigParser
 from ..host import Host
 from ..cnamelist import CName
+
+def encode_list_query_param(values):
+    return urllib.parse.quote(json.dumps(values))
 
 class DNSVSInterface:
 
@@ -20,10 +24,11 @@ class DNSVSInterface:
         logging.error("No token file found. Also make sure that "
                       "a [prod] section with a 'token = value' assignment exists.")
         token = ''
-    root_url = 'https://www-net.scc.kit.edu/api/3.2/dns'
+    root_url = 'https://www-net.scc.kit.edu/api/4.2/dns'
     geturl = root_url + '/record/list'
     createurl = root_url + '/record/create'
     deleteurl = root_url + '/record/delete'
+    fqdn_createurl = root_url + '/fqdn/create'
 
     headers_dict = {"accept": "application/json", "Content-Type": "application/json", 'Authorization': 'Bearer ' + token}
 
@@ -86,31 +91,48 @@ class DNSVSInterface:
 
     def add_host(self, host: Host) -> None:
         """Adds an A record to the server."""
-        # TODO: handle these errors in the response
-        # check whether there is already a CNAME with that fqdn
-        # url = self.root_url+"/record/list?type=CNAME&fqdn="+host.fqdn+"."
-        # dependencies = self._execute(url=url, method="get")
-        # if dependencies!=[]:
-        #     raise Exception('Attempting to overwrite an existing CNAME record in DNSVS with an A record!')
-        # url = self.root_url+"/record/list?type=A&fqdn="+host.fqdn+"."
-        # dependencies = self._execute(url=url, method="get")
-        # if dependencies!=[]:
-        #     if dependencies[0]['data']==str(host.ip):
-        #         logging.warning('Attempting to add already an existing A record.')
-        #         return
-        #     elif dependencies[0]['data']!=str(host.ip):
-        #         raise Exception('Attempting to overwrite an existing A record with a different one.')
 
-        data = { "new": {
-                "data": str(host.ip),
-                "fqdn": host.fqdn + '.',
-                "type": 'A',
-                "fqdn_type": 'domain',
-                "target_is_reverse_unique": host.vars['unique']
+        #fqdn = host.fqdn.rstrip('.')  # Ensure no trailing dot
+        fqdn = host.fqdn + "."
+        fqdn_list = encode_list_query_param([fqdn])
+        #type_list = encode_list_query_param(["A"])
+
+
+        # Step 0: ensure no A record for that exists
+        #url = f"{self.root_url}/record/list?fqdn_list={fqdn_list}&type_list={type_list}"
+        #dependencies = self._execute(url=url, method="get")
+
+        #print(dependencies)
+        #if dependencies:
+            #if dependencies[0]['data'] == str(host.ip):
+                #logging.warning('Attempting to add an already existing A record.')
+                #return
+            #else:
+                #raise Exception('Trying to overwrite existing A record with different IP.')
+
+        # Step 1: ensure FQDN exists
+        url = f"{self.root_url}/fqdn/list?value_list={fqdn_list}"
+        fqdns = self._execute(url=url, method="get")
+        if not fqdns or not any(fqdns):
+            logging.info(f"FQDN '{fqdn}' not found. Creating it.")
+            fqdn_data = {
+                "new": {
+                    "value": fqdn,
+                    "type": "domain",
                 }
+            }
+            self._execute(url=self.fqdn_createurl, method="post", data=json.dumps(fqdn_data))
+
+        # Step 2: create A record
+        data = {
+            "new": {
+                "data": str(host.ip),
+                "fqdn": fqdn,
+                "type": "A",
+                "target_is_reverse_unique": host.vars['unique']
+            }
         }
-        json_string = json.dumps(data, ensure_ascii = False)
-        self._execute(url=self.createurl, method="post", data=json_string)
+        self._execute(url=self.createurl, method="post", data=json.dumps(data))
 
     def remove_host(self, host: Host) -> None:
         """Remove an A record from the server."""
@@ -131,7 +153,6 @@ class DNSVSInterface:
         data = {"new": {
                 "fqdn": fqdn + ".",
                 'type': 'CNAME',
-                "fqdn_type": 'alias',
                 "data": dest + ".",
                 "target_is_reverse_unique": False}
                 }

@@ -4,7 +4,7 @@
 import argparse
 import logging
 import types
-from distutils.util import strtobool
+from .utils import strtobool
 import sys
 from typing import List
 

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 # import types
-# from distutils.util import strtobool
 # import sys
 
 import git

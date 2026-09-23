@@ -4,7 +4,7 @@ import os.path
 import logging
 import subprocess
 import argparse
-from distutils.util import strtobool
+from .utils import strtobool
 import sys
 
 from . import hostlist

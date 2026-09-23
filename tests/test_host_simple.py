@@ -4,7 +4,7 @@ import ipaddress
 
 
 class TestSimpleHost():
-    def setup(self):
+    def setup_method(self):
         self.host = host.YMLHost(
             {
                 'hostname': 'host1.abc.example.com',

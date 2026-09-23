@@ -8,7 +8,7 @@ import json
 
 
 class TestGroup():
-    def setup(self):
+    def setup_method(self):
         self.hosts = hostlist.YMLHostlist()
         self.cnames = cnamelist.FileCNamelist()
 

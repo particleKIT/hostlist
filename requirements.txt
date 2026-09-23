@@ -5,3 +5,4 @@ requests
 cherrypy
 GitPython
 ansible-cmdb
+zombie-imp; python_version >= '3.12'

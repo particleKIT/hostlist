@@ -29,6 +29,7 @@ class Host:
         }  # type: Dict[str, Any] # noqa: F821
 
         self.ip = None  # type: Optional[ipaddress.ip_address]
+        self.ipv6 = None  # type: Optional[ipaddress.ip_address]
         self.mac = None
         self.hostname = ""  # type: str
         self.publicip = True  # type: bool
@@ -163,6 +164,13 @@ class YMLHost(Host):
             assert isinstance(self.ip, ipaddress.IPv4Address)
         except:
             raise Exception("Host %s does not have a valid IP address (%s)." % (self.hostname, self.vars['ip']))
+        # optional IPv6 address (2a00:1398:4:3800::/64 on vlan3); empty value = none
+        if self.vars.get('ipv6'):
+            try:
+                self.ipv6 = ipaddress.ip_address(self.vars['ipv6'])
+                assert isinstance(self.ipv6, ipaddress.IPv6Address)
+            except:
+                raise Exception("Host %s does not have a valid IPv6 address (%s)." % (self.hostname, self.vars['ipv6']))
         if 'mac' in self.vars:
             try:
                 assert self.MACREGEXP.match(self.vars['mac'])

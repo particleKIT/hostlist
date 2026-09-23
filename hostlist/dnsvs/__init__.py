@@ -60,6 +60,15 @@ class DNSVSInterface:
                 hosts[fqdn] = (entry['data'], is_nonunique)
         return hosts
 
+    def get_ipv6(self) -> Dict[str, str]:
+        """Reads AAAA records from the server, as {fqdn: data}."""
+        result = self._execute(self.geturl, method="get")[0]
+        ipv6 = {}
+        for entry in result:
+            if entry['type'] == 'AAAA':
+                ipv6[entry['fqdn'].rstrip(".")] = entry['data']
+        return ipv6
+
     def get_cnames(self) -> Dict[str, str]:
         """Reads CNAME records from the server."""
         result = self._execute(self.geturl, method="get")[0]
@@ -141,6 +150,33 @@ class DNSVSInterface:
                 "data": str(host.ip),
                 "fqdn": host.fqdn + '.',
                 "type": 'A'
+                }
+        }
+        json_string = json.dumps(data)
+        self._execute(url=self.deleteurl, method="post", data=json_string)
+
+    def add_ipv6(self, host: Host) -> None:
+        """Adds an AAAA record to the server. Requires the fqdn (and its A
+        record) to exist already, which the A-record sync guarantees."""
+        fqdn = host.fqdn + "."
+        data = {
+            "new": {
+                "data": str(host.ipv6),
+                "fqdn": fqdn,
+                "type": "AAAA",
+                "target_is_reverse_unique": False
+            }
+        }
+        self._execute(url=self.createurl, method="post", data=json.dumps(data))
+
+    def remove_ipv6(self, host: Host) -> None:
+        """Removes an AAAA record from the server. NOT wired into the
+        automatic diff on purpose: AAAA records are only ever added
+        automatically and removed by hand."""
+        data = { "old": {
+                "data": str(host.ipv6),
+                "fqdn": host.fqdn + '.',
+                "type": 'AAAA'
                 }
         }
         json_string = json.dumps(data)

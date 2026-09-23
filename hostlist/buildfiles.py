@@ -105,6 +105,10 @@ def sync_dnsvs(file_hostlist, file_cnames, dryrun):
         if choice != '' and strtobool(choice):
             sync.apply_diff(total_diff)
 
+    # AAAA records: one-way sync (add-only, never removes/overwrites)
+    if not dryrun:
+        sync.sync_ipv6(file_hostlist, con)
+
 
 def run_service(service: str, file_hostlist: hostlist.Hostlist, file_cnames: cnamelist.CNamelist) -> None:
     "Run all services according to servicedict on hosts in file_hostlist."

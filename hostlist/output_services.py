@@ -53,7 +53,12 @@ class hosts(Output):
 
     @classmethod
     def gen_content(cls, hostlist: Hostlist, cnames: CNamelist) -> str:
-        hoststrings = (str(h.ip) + " " + " ".join(h.aliases) for h in hostlist if h.ip)
+        hoststrings = []
+        for h in hostlist:
+            if h.ip:
+                hoststrings.append(str(h.ip) + " " + " ".join(h.aliases))
+            if h.ipv6:
+                hoststrings.append(str(h.ipv6) + " " + " ".join(h.aliases))
         content = '\n'.join(hoststrings)
         return content
 

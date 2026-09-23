@@ -121,9 +121,15 @@ class YMLHostlist(Hostlist):
         for h in self:
             if 'docker' in h.vars and 'ports' in h.vars['docker']:
                 # prefix docker ports with container IP
+                ports = list(h.vars['docker']['ports'])
                 h.vars['docker']['ports'] = [
-                    str(h.ip) + ':' + port for port in h.vars['docker']['ports']
+                    str(h.ip) + ':' + port for port in ports
                 ]
+                # publish the same ports on the host's public IPv6 address, if any
+                if h.ipv6:
+                    h.vars['docker']['ports'] += [
+                        '[%s]:%s' % (h.ipv6, port) for port in ports
+                    ]
 
     def print(self, filter):
         filtered = [h for h in self if h.filter(filter)]

@@ -164,7 +164,11 @@ class DNSVSInterface:
                 "data": str(host.ipv6),
                 "fqdn": fqdn,
                 "type": "AAAA",
-                "target_is_reverse_unique": False
+                # mirror the A record's uniqueness (target_is_reverse_unique
+                # false blocks NATVS port opening):
+                # unique unless the host is in config.yml nonunique_ips. All
+                # pre-existing AAAAs were flipped to unique in 2026-10.
+                "target_is_reverse_unique": host.vars['unique']
             }
         }
         self._execute(url=self.createurl, method="post", data=json.dumps(data))
